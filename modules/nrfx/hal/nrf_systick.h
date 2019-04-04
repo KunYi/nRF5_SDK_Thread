@@ -1,41 +1,32 @@
-/**
- * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- *
+/*
+ * Copyright (c) 2016 - 2019, Nordic Semiconductor ASA
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form, except as embedded into a Nordic
- *    Semiconductor ASA integrated circuit in a product or a software update for
- *    such product, must reproduce the above copyright notice, this list of
- *    conditions and the following disclaimer in the documentation and/or other
- *    materials provided with the distribution.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
+ * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
- * 4. This software, with or without modification, must only be used with a
- *    Nordic Semiconductor ASA integrated circuit.
- *
- * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
- *
- * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL NORDIC SEMICONDUCTOR ASA OR CONTRIBUTORS BE
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef NRF_SYSTICK_H__
@@ -51,18 +42,18 @@ extern "C" {
  * @defgroup nrf_systick_hal SYSTICK HAL
  * @{
  * @ingroup nrf_systick
- * @brief   Hardware access layer for managing the SYSTICK peripheral.
+ * @brief   Hardware access layer (HAL) for managing the SYSTICK peripheral.
  *
- * SYSTICK is ARM peripheral, not Nordic design.
- * It means that it has no Nordic-typical interface with Tasks and Events.
+ * SYSTICK is a peripheral designed by ARM.
+ * This means that it does not feature the typical Nordic interface with Tasks and Events.
  *
- * Its usage is limited here to implement simple delays.
- * Also keep in mind that this timer would be stopped when CPU is sleeping
+ * Its usage is limited here to the implementation of simple delays.
+ * Moreover, keep in mind that this timer will be stopped when CPU is sleeping
  * (WFE/WFI instruction is successfully executed).
  */
 
 /**
- * @brief Mask of usable bits in the SysTick value
+ * @brief Mask of usable bits in the SysTick value.
  */
 #define NRF_SYSTICK_VAL_MASK SysTick_VAL_CURRENT_Msk
 
@@ -89,36 +80,36 @@ typedef enum {
 } nrf_systick_csr_flags_t;
 
 /**
- * @brief Get Configuration and Status Register
+ * @brief Function for getting Configuration and Status Register.
  *
- * @return Values composed by @ref nrf_systick_csr_flags_t.
  * @note The @ref NRF_SYSTICK_CSR_COUNTFLAG_MASK value is cleared when CSR register is read.
+ * @return Values composed by @ref nrf_systick_csr_flags_t.
  */
 __STATIC_INLINE uint32_t nrf_systick_csr_get(void);
 
 /**
- * @brief Set Configuration and Status Register
+ * @brief Function for setting Configuration and Status Register.
  *
  * @param[in] val The value composed from @ref nrf_systick_csr_flags_t.
  */
 __STATIC_INLINE void nrf_systick_csr_set(uint32_t val);
 
 /**
- * @brief Get the current reload value.
+ * @brief Function for getting the current reload value.
  *
  * @return The reload register value.
  */
 __STATIC_INLINE uint32_t nrf_systick_load_get(void);
 
 /**
- * @brief Configure the reload value.
+ * @brief Function for configuring the reload value.
  *
- * @param[in] val The value to set in the reload register.
+ * @param[in] val The value to be set in the reload register.
  */
 __STATIC_INLINE void nrf_systick_load_set(uint32_t val);
 
 /**
- * @brief Read the SysTick current value
+ * @brief Function for reading the SysTick current value.
  *
  * @return The current SysTick value
  * @sa NRF_SYSTICK_VAL_MASK
@@ -126,7 +117,7 @@ __STATIC_INLINE void nrf_systick_load_set(uint32_t val);
 __STATIC_INLINE uint32_t nrf_systick_val_get(void);
 
 /**
- * @brief Clear the SysTick current value
+ * @brief Function for clearing the SysTick current value.
  *
  * @note The SysTick does not allow setting current value.
  *       Any write to VAL register would clear the timer.
@@ -134,12 +125,11 @@ __STATIC_INLINE uint32_t nrf_systick_val_get(void);
 __STATIC_INLINE void nrf_systick_val_clear(void);
 
 /**
- * @brief Read the calibration register
+ * @brief Function for reading the calibration register.
  *
- * @return The calibration register value
+ * @return The calibration register value.
  */
 __STATIC_INLINE uint32_t nrf_systick_calib_get(void);
-
 
 
 #ifndef SUPPRESS_INLINE_IMPLEMENTATION
