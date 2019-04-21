@@ -178,10 +178,9 @@
           <name>CCDefines</name>
           <state>BOARD_PCA10059</state>
           <state>CONFIG_GPIO_AS_PINRESET</state>
-          <state>DEBUG</state>
-          <state>DEBUG_NRF</state>
           <state>ENABLE_FEM</state>
           <state>FLOAT_ABI_HARD</state>
+          <state>MBR_PRESENT</state>
           <state>NRF52840_XXAA</state>
           <state>SWI_DISABLE0</state>
           <state>ZB_TRACE_LEVEL=0</state>
@@ -318,7 +317,6 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\boards</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\drivers_nrf\usbd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\atomic</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\atomic_fifo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\balloc</state>
@@ -348,12 +346,15 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\softdevice\mbr\nrf52840\headers</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\common</state>
           <state>$PROJ_DIR$\..\..\..</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\fnmatch</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\fem</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\mac_features</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\mac_features\ack_generator</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\rsch</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\segger_rtt</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\utf_converter</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\zboss\include</state>
@@ -431,7 +432,7 @@
         </option>
         <option>
           <name>IccAllowVLA</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IccCppDialect</name>
@@ -528,10 +529,9 @@
       <name>ADefines</name>
           <state>BOARD_PCA10059</state>
           <state>CONFIG_GPIO_AS_PINRESET</state>
-          <state>DEBUG</state>
-          <state>DEBUG_NRF</state>
           <state>ENABLE_FEM</state>
           <state>FLOAT_ABI_HARD</state>
+          <state>MBR_PRESENT</state>
           <state>NRF52840_XXAA</state>
           <state>SWI_DISABLE0</state>
           <state>ZB_TRACE_LEVEL=0</state>
@@ -635,7 +635,6 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\boards</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\drivers_nrf\usbd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\atomic</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\atomic_fifo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\balloc</state>
@@ -665,12 +664,15 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\softdevice\mbr\nrf52840\headers</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\common</state>
           <state>$PROJ_DIR$\..\..\..</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\fnmatch</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\fem</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\mac_features</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\mac_features\ack_generator</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\rsch</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\segger_rtt</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\utf_converter</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\zboss\include</state>
@@ -1097,6 +1099,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\usbd\app_usbd.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\usbd\class\cdc\acm\app_usbd_cdc_acm.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\usbd\app_usbd_core.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\usbd\app_usbd_serial_num.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\usbd\app_usbd_string_desc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\util\app_util_platform.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\assert\assert.c</name>    </file>    <file>
@@ -1124,25 +1127,24 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_power.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_rng.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_uart.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\drivers_nrf\usbd\nrf_drv_usbd.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\hal\nrf_ecb.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd\nrf_nvic.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\hal\nrf_nvmc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd\nrf_soc.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\soc\nrfx_atomic.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_clock.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_gpiote.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_power.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_power_clock.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\prs\nrfx_prs.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_rng.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_systick.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_timer.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_uart.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_uarte.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_uarte.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_usbd.c</name>    </file>  </group>  <group>
   <name>Board Support</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\libraries\bsp\bsp.c</name>    </file>  </group>  <group>
   <name>Application</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\main.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\config\sdk_config.h</name>    </file>  </group>  <group>
   <name>nRF_Segger_RTT</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\segger_rtt\SEGGER_RTT.c</name>    </file>    <file>
@@ -1150,17 +1152,22 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\segger_rtt\SEGGER_RTT_printf.c</name>    </file>  </group>  <group>
   <name>None</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52840.s</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\main.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\modules\nrfx\mdk\system_nrf52840.c</name>    </file>  </group>  <group>
   <name>nRF_Zigbee</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_attr.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_attr_report.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_bdb.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_generic_cmd.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_ping.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_radio.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_zcl.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_cmd_zdo.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_utils.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\cli\zigbee_cli_utils.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\common\zigbee_helpers.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\components\zigbee\common\zigbee_logger_eprxzcl.c</name>    </file>  </group>  <group>
   <name>UTF8/UTF16 converter</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\external\utf_converter\utf.c</name>    </file>  </group></project>
 

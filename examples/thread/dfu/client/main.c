@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -115,7 +115,7 @@ void handle_dfu_command(int argc, char *argv[])
 {
     if (argc == 0)
     {
-        otCliUartAppendResult(OT_ERROR_PARSE);
+        otCliAppendResult(OT_ERROR_PARSE);
         return;
     }
 
@@ -123,14 +123,14 @@ void handle_dfu_command(int argc, char *argv[])
     {
         struct background_dfu_diagnostic diag;
         coap_dfu_diagnostic_get(&diag);
-        otCliUartOutputFormat("build_id: 0x%08x, "
+        otCliOutputFormat("build_id: 0x%08x, "
                               "state: %d, "
                               "prev_state: %d, ",
                               diag.build_id,
                               diag.state,
                               diag.prev_state);
-        otCliUartOutputFormat("\r\n");
-        otCliUartAppendResult(OT_ERROR_NONE);
+        otCliOutputFormat("\r\n");
+        otCliAppendResult(OT_ERROR_NONE);
     }
 }
 
@@ -171,12 +171,6 @@ static void state_changed_callback(uint32_t aFlags, void *aContext)
 {
     if (aFlags & OT_CHANGED_THREAD_NETDATA)
     {
-        otIp6SlaacUpdate(thread_ot_instance_get(),
-                         m_app.addresses,
-                         sizeof(m_app.addresses) / sizeof(m_app.addresses[0]),
-                         otIp6CreateRandomIid,
-                         NULL);
-
         addresses_print(thread_ot_instance_get());
     }
 
@@ -218,9 +212,9 @@ static void thread_bsp_init(void)
  */
 static void thread_instance_init(void)
 {
-    thread_configuration_t  thread_configuration =
+    thread_configuration_t thread_configuration =
     {
-        .role              = RX_ON_WHEN_IDLE,
+        .radio_mode        = THREAD_RADIO_MODE_RX_ON_WHEN_IDLE,
         .autocommissioning = true,
     };
 
@@ -228,7 +222,7 @@ static void thread_instance_init(void)
     thread_cli_init();
     thread_state_changed_callback_set(state_changed_callback);
 
-    otCliUartSetUserCommands(m_user_commands, sizeof(m_user_commands) / sizeof(otCliCommand));
+    otCliSetUserCommands(m_user_commands, sizeof(m_user_commands) / sizeof(otCliCommand));
 }
 
 

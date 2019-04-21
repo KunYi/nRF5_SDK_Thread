@@ -866,7 +866,7 @@ The CCA detection time shall be equal to 8 symbol periods.
 #define ZB_CHANNEL_FREE_ED_VALUE 0x60  /* TODO: check it */
 #define ZB_FAILS_PERCENTAGE   4  /* use it as divider, 25% */
 
-#define ZB_MAC_QUEUE_SIZE 4
+#define ZB_MAC_QUEUE_SIZE 5
 
 /**
 The maximum time, in

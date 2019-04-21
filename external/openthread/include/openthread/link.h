@@ -84,7 +84,8 @@ typedef uint8_t otMacFilterIterator; ///< Used to iterate through mac filter ent
  * Defines address mode of the mac filter.
  *
  */
-typedef enum otMacFilterAddressMode {
+typedef enum otMacFilterAddressMode
+{
     OT_MAC_FILTER_ADDRESS_MODE_DISABLED,  ///< Address filter is disabled.
     OT_MAC_FILTER_ADDRESS_MODE_WHITELIST, ///< Whitelist address filter mode is enabled.
     OT_MAC_FILTER_ADDRESS_MODE_BLACKLIST, ///< Blacklist address filter mode is enabled.
@@ -278,11 +279,15 @@ OTAPI bool OTCALL otLinkIsInTransmitState(otInstance *aInstance);
 /**
  * This function enqueues an IEEE 802.15.4 out of band Frame for transmission.
  *
+ * An Out of Band frame is one that was generated outside of OpenThread.
+ *
  * @param[in] aInstance  A pointer to an OpenThread instance.
  * @param[in] aOobFrame  A pointer to the frame to transmit.
  *
- * @retval OT_ERROR_NONE           Successfully enqueued an IEEE 802.15.4 Data Request message.
- * @retval OT_ERROR_ALREADY        An IEEE 802.15.4 out of band frame is already enqueued.
+ * @retval OT_ERROR_NONE           Successfully scheduled the frame transmission.
+ * @retval OT_ERROR_ALREADY        MAC layer is busy sending a previously requested frame.
+ * @retval OT_ERROR_INVALID_STATE  The MAC layer is not enabled.
+ * @retval OT_ERROR_INVALID_ARGS   The argument @p aOobFrame is NULL.
  *
  */
 OTAPI otError OTCALL otLinkOutOfBandTransmitRequest(otInstance *aInstance, otRadioFrame *aOobFrame);
@@ -317,7 +322,7 @@ OTAPI uint8_t OTCALL otLinkGetChannel(otInstance *aInstance);
 OTAPI otError OTCALL otLinkSetChannel(otInstance *aInstance, uint8_t aChannel);
 
 /**
- * Get the supported channel mask.
+ * Get the supported channel mask of MAC layer.
  *
  * @param[in] aInstance A pointer to an OpenThread instance.
  *
@@ -327,7 +332,7 @@ OTAPI otError OTCALL otLinkSetChannel(otInstance *aInstance, uint8_t aChannel);
 uint32_t otLinkGetSupportedChannelMask(otInstance *aInstance);
 
 /**
- * Set the supported channel mask.
+ * Set the supported channel mask of MAC layer.
  *
  * This function succeeds only when Thread protocols are disabled.
  *
@@ -417,18 +422,24 @@ OTAPI otError OTCALL otLinkSetPanId(otInstance *aInstance, otPanId aPanId);
 OTAPI uint32_t OTCALL otLinkGetPollPeriod(otInstance *aInstance);
 
 /**
- * Set the data poll period for sleepy end device.
+ * Set/clear user-specified/external data poll period for sleepy end device.
  *
  * @note This function updates only poll period of sleepy end device. To update child timeout the function
  *       `otSetChildTimeout()` shall be called.
  *
+ * @note Minimal non-zero value should be `OPENTHREAD_CONFIG_MINIMUM_POLL_PERIOD` (10ms).
+ *       Or zero to clear user-specified poll period.
+ *
  * @param[in]  aInstance    A pointer to an OpenThread instance.
  * @param[in]  aPollPeriod  data poll period in milliseconds.
+ *
+ * @retval OT_ERROR_NONE           Successfully set/cleared user-specified poll period.
+ * @retval OT_ERROR_INVALID_ARGS   If aPollPeriod is invalid.
  *
  * @sa otLinkGetPollPeriod
  *
  */
-OTAPI void OTCALL otLinkSetPollPeriod(otInstance *aInstance, uint32_t aPollPeriod);
+OTAPI otError OTCALL otLinkSetPollPeriod(otInstance *aInstance, uint32_t aPollPeriod);
 
 /**
  * Get the IEEE 802.15.4 Short Address.
@@ -439,18 +450,6 @@ OTAPI void OTCALL otLinkSetPollPeriod(otInstance *aInstance, uint32_t aPollPerio
  *
  */
 OTAPI otShortAddress OTCALL otLinkGetShortAddress(otInstance *aInstance);
-
-/**
- * Set the Short Address for address filtering.
- *
- * @param[in] aInstance      A pointer to an OpenThread instance.
- * @param[in] aShortAddress  The IEEE 802.15.4 Short Address.
- *
- * @retval OT_ERROR_NONE             If successful.
- * @retval OT_ERROR_INVALID_STATE    If the raw link-layer isn't enabled.
- *
- */
-OTAPI otError OTCALL otLinkSetShortAddress(otInstance *aInstance, uint16_t aShortAddress);
 
 /**
  * This function gets the address mode of MAC filter.
@@ -723,10 +722,11 @@ OTAPI const otMacCounters *OTCALL otLinkGetCounters(otInstance *aInstance);
  * @note This callback is called before IEEE 802.15.4 security processing.
  *
  * @param[in]  aFrame    A pointer to the received IEEE 802.15.4 frame.
+ * @param[in]  aIsTx     Whether this frame is transmitted, not received.
  * @param[in]  aContext  A pointer to application-specific context.
  *
  */
-typedef void (*otLinkPcapCallback)(const otRadioFrame *aFrame, void *aContext);
+typedef void (*otLinkPcapCallback)(const otRadioFrame *aFrame, bool aIsTx, void *aContext);
 
 /**
  * This function registers a callback to provide received raw IEEE 802.15.4 frames.
@@ -801,6 +801,36 @@ otError otLinkSetEnabled(otInstance *aInstance, bool aEnable);
  *
  */
 bool otLinkIsEnabled(otInstance *aInstance);
+
+/**
+ * This function gets the minimum channel number of IEEE 802.15.4 physical layer.
+ *
+ * @param[in]  aInstance  A pointer to an OpenThread instance.
+ *
+ * @returns The minimum channel number.
+ *
+ */
+OTAPI uint8_t OTCALL otLinkGetPhyChannelMin(otInstance *aInstance);
+
+/**
+ * This function gets the maximum channel number of IEEE 802.15.4 physical layer.
+ *
+ * @param[in]  aInstance  A pointer to an OpenThread instance.
+ *
+ * @returns The maximum channel number.
+ *
+ */
+OTAPI uint8_t OTCALL otLinkGetPhyChannelMax(otInstance *aInstance);
+
+/**
+ * This function gets the supported channel mask of IEEE 802.15.4 physical layer.
+ *
+ * @param[in]  aInstance  A pointer to an OpenThread instance.
+ *
+ * @returns The supported channel mask as `uint32_t` with bit 0 (lsb) mapping to channel 0, bit 1 to channel 1, so on.
+ *
+ */
+OTAPI uint32_t OTCALL otLinkGetPhySupportedChannelMask(otInstance *aInstance);
 
 /**
  * @}

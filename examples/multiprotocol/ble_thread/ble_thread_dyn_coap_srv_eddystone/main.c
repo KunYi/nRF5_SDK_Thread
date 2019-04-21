@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -190,7 +190,7 @@ static void button_evt_handler(uint8_t pin_no, uint8_t button_action)
     }
     else if (button_action == APP_BUTTON_PUSH && pin_no == BUTTON_PROVISIONING)
     {
-        thread_coap_utils_provisioning_enable(true);
+        thread_coap_utils_provisioning_enable_set(true);
     }
 }
 
@@ -212,7 +212,7 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
             case OT_DEVICE_ROLE_DISABLED:
             case OT_DEVICE_ROLE_DETACHED:
             default:
-                thread_coap_utils_provisioning_enable(false);
+                thread_coap_utils_provisioning_enable_set(false);
                 break;
         }
     }
@@ -419,9 +419,10 @@ static void thread_instance_init(void)
 {
     thread_configuration_t thread_configuration =
     {
-        .role              = RX_ON_WHEN_IDLE,
+        .radio_mode        = THREAD_RADIO_MODE_RX_ON_WHEN_IDLE,
         .autocommissioning = true,
     };
+
     thread_init(&thread_configuration);
     thread_cli_init();
     thread_state_changed_callback_set(thread_state_changed_callback);
@@ -432,11 +433,10 @@ static void thread_instance_init(void)
  */
 static void thread_coap_init(void)
 {
-    thread_coap_configuration_t thread_coap_configuration =
+    thread_coap_utils_configuration_t thread_coap_configuration =
     {
         .coap_server_enabled               = true,
         .coap_client_enabled               = false,
-        .coap_cloud_enabled                = false,
         .configurable_led_blinking_enabled = false,
     };
 
@@ -463,8 +463,6 @@ int main(void)
     conn_params_init();
     nrf_ble_es_init(on_es_evt);
 
-    thread_coap_utils_led_timer_init();
-    thread_coap_utils_provisioning_timer_init();
     thread_instance_init();
     thread_coap_init();
     thread_bsp_init();
@@ -477,7 +475,7 @@ int main(void)
         app_sched_execute();
         thread_process();
 
-        if (NRF_LOG_PROCESS() == false && !otTaskletsArePending(thread_ot_instance_get()))
+        if (NRF_LOG_PROCESS() == false)
         {
             thread_sleep();
         }

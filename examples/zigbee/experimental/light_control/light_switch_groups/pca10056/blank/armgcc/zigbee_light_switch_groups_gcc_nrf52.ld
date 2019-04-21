@@ -45,6 +45,12 @@ SECTIONS
   .mem_section_dummy_rom :
   {
   }
+  .pwr_mgmt_data :
+  {
+    PROVIDE(__start_pwr_mgmt_data = .);
+    KEEP(*(SORT(.pwr_mgmt_data*)))
+    PROVIDE(__stop_pwr_mgmt_data = .);
+  } > FLASH
     .nrf_queue :
   {
     PROVIDE(__start_nrf_queue = .);
@@ -71,5 +77,6 @@ SECTIONS
   } > FLASH
 
 } INSERT AFTER .text
+
 
 INCLUDE "nrf_common.ld"

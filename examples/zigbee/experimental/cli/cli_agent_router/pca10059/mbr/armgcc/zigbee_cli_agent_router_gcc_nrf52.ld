@@ -51,17 +51,23 @@ SECTIONS
   .mem_section_dummy_rom :
   {
   }
+  .log_backends :
+  {
+    PROVIDE(__start_log_backends = .);
+    KEEP(*(SORT(.log_backends*)))
+    PROVIDE(__stop_log_backends = .);
+  } > FLASH
+  .pwr_mgmt_data :
+  {
+    PROVIDE(__start_pwr_mgmt_data = .);
+    KEEP(*(SORT(.pwr_mgmt_data*)))
+    PROVIDE(__stop_pwr_mgmt_data = .);
+  } > FLASH
     .nrf_queue :
   {
     PROVIDE(__start_nrf_queue = .);
     KEEP(*(.nrf_queue))
     PROVIDE(__stop_nrf_queue = .);
-  } > FLASH
-    .zb_ep_handlers :
-  {
-    PROVIDE(__start_zb_ep_handlers = .);
-    KEEP(*(.zb_ep_handlers))
-    PROVIDE(__stop_zb_ep_handlers = .);
   } > FLASH
   .log_const_data :
   {
@@ -75,17 +81,11 @@ SECTIONS
     KEEP(*(.cli_command))
     PROVIDE(__stop_cli_command = .);
   } > FLASH
-  .pwr_mgmt_data :
+    .zb_ep_handlers :
   {
-    PROVIDE(__start_pwr_mgmt_data = .);
-    KEEP(*(SORT(.pwr_mgmt_data*)))
-    PROVIDE(__stop_pwr_mgmt_data = .);
-  } > FLASH
-  .log_backends :
-  {
-    PROVIDE(__start_log_backends = .);
-    KEEP(*(SORT(.log_backends*)))
-    PROVIDE(__stop_log_backends = .);
+    PROVIDE(__start_zb_ep_handlers = .);
+    KEEP(*(.zb_ep_handlers))
+    PROVIDE(__stop_zb_ep_handlers = .);
   } > FLASH
     .nrf_balloc :
   {
@@ -95,5 +95,6 @@ SECTIONS
   } > FLASH
 
 } INSERT AFTER .text
+
 
 INCLUDE "nrf_common.ld"

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -52,6 +52,7 @@
 #include "nrf_bootloader_app_start.h"
 #include "nrf_soc.h"
 #include "nrf_dfu.h"
+#include "nrf_mbr.h"
 #include "app_error.h"
 #include "app_error_weak.h"
 #include "nrf_bootloader_info.h"
@@ -61,6 +62,29 @@
 #include "nrf_log_default_backends.h"
 
 #include "nrf_dfu_mbr.h"
+
+#define LEGACY_UICR_BOOTLOADER_START_ADDRESS 0x10001014  // Location (in UICR) of the bootloader address.
+
+/** @brief  This variable ensures that the linker script will write the bootloader start address
+ *          to the UICR register. This value will be written in the HEX file and thus written to
+ *          UICR when the bootloader is flashed into the chip.
+ *
+ *          New bootloader writes its start address also in MBR code region. This operation ensures
+ *          backward compatibility.
+ */
+#if defined (__CC_ARM )
+    #pragma push
+    #pragma diag_suppress 1296
+    uint32_t  m_legacy_uicr_bootloader_start_address __attribute__((at(LEGACY_UICR_BOOTLOADER_START_ADDRESS)))
+                                                           = BOOTLOADER_START_ADDR;
+    #pragma pop
+#elif defined ( __GNUC__ ) || defined ( __SES_ARM )
+    volatile uint32_t m_legacy_uicr_bootloader_start_address __attribute__ ((section(".legacy_uicr_bootloader_start_address")))
+                                                   = BOOTLOADER_START_ADDR;
+#elif defined ( __ICCARM__ )
+    __root    const uint32_t m_legacy_uicr_bootloader_start_address @ LEGACY_UICR_BOOTLOADER_START_ADDRESS
+                                                   = BOOTLOADER_START_ADDR;
+#endif
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {

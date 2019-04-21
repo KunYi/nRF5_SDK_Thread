@@ -36,10 +36,13 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- PURPOSE: Internal header file for NRF52840
+PURPOSE: Platform specific for NRF52840 SoC.
 */
+
 #ifndef ZB_NRF52840_INTERNAL_H
 #define ZB_NRF52840_INTERNAL_H 1
+
+#include "zboss_api.h"
 
 #ifdef __GNUC__
 /* Switch off warnings produced by Nordic headers */
@@ -49,7 +52,6 @@
 #include "nrf.h"
 #include "nrf_drv_timer.h"
 #include "nrf_drv_rng.h"
-#include "zboss_api.h"
 #include "nrf_assert.h"
 #if defined SOFTDEVICE_PRESENT
 #include "nrf_soc.h"
@@ -64,6 +66,14 @@ nrf_drv_timer_config_t zb_nrf_cfg_get_timer_default_config(void);
 zb_uint32_t zb_nrf52840_sched_sleep(zb_uint32_t sleep_tmo);
 zb_void_t zb_osif_wait_for_event(zb_void_t);
 
+void mac_nrf52840_trans_set_rx_on_off(zb_bool_t rx_on);
+#if defined SOFTDEVICE_PRESENT
+/**@brief Function for informing the radio driver about the SoC events of the SoftDevice.
+ *        Copied from the nRF radio driver header files to avoid additional external dependencies inside SDK examples.
+ */
+void nrf_raal_softdevice_soc_evt_handler(uint32_t evt_id);
+#endif
+
 #if defined ZB_TRACE_LEVEL && defined ZB_TRACE_OVER_USART && !defined ZB_NRF_TRACE
 #include "nordic_common.h"
 #include "nrf_drv_uart.h"
@@ -72,6 +82,7 @@ const nrf_drv_uart_t* zb_nrf_cfg_get_nrf52840_uart(void);
 const nrf_drv_uart_config_t* zb_nrf_cfg_get_nrf52840_uart_config(void);
 void zb_osif_uart_int_disable(void);
 void zb_osif_uart_int_enable(void);
+
 #endif
 
 #if (defined(DEBUG_NRF) || defined(DEBUG_NRF_USER))

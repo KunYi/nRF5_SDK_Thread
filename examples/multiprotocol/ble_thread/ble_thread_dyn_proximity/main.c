@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -640,7 +640,7 @@ static void bsp_event_handler(bsp_event_t event)
             break;
 
         case BSP_EVENT_KEY_3:
-            thread_coap_utils_provisioning_enable(true);
+            thread_coap_utils_provisioning_enable_set(true);
             break;
 
         default:
@@ -696,7 +696,7 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
             case OT_DEVICE_ROLE_DISABLED:
             case OT_DEVICE_ROLE_DETACHED:
             default:
-                thread_coap_utils_provisioning_enable(false);
+                thread_coap_utils_provisioning_enable_set(false);
                 break;
         }
     }
@@ -1044,7 +1044,7 @@ static void thread_instance_init(void)
 {
     thread_configuration_t thread_configuration =
     {
-        .role              = RX_ON_WHEN_IDLE,
+        .radio_mode        = THREAD_RADIO_MODE_RX_ON_WHEN_IDLE,
         .autocommissioning = true,
     };
 
@@ -1065,11 +1065,10 @@ static void thread_instance_finalize(void)
  */
 static void thread_coap_init(void)
 {
-    thread_coap_configuration_t thread_coap_configuration =
+    thread_coap_utils_configuration_t thread_coap_configuration =
     {
         .coap_server_enabled               = true,
         .coap_client_enabled               = false,
-        .coap_cloud_enabled                = false,
         .configurable_led_blinking_enabled = false,
     };
 
@@ -1134,9 +1133,6 @@ int main(void)
     power_init();
     power_management_init();
 
-    thread_coap_utils_led_timer_init();
-    thread_coap_utils_provisioning_timer_init();
-
     ble_stack_init();
 
     adc_configure();
@@ -1165,7 +1161,7 @@ int main(void)
             thread_process();
             app_sched_execute();
 
-            if (NRF_LOG_PROCESS() == false && !otTaskletsArePending(thread_ot_instance_get()))
+            if (NRF_LOG_PROCESS() == false)
             {
                 thread_sleep();
             }

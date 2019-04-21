@@ -284,6 +284,8 @@ enum
     OT_CHANGED_SECURITY_POLICY             = 1 << 22, ///< Security Policy changed
     OT_CHANGED_CHANNEL_MANAGER_NEW_CHANNEL = 1 << 23, ///< Channel Manager new pending Thread channel changed
     OT_CHANGED_SUPPORTED_CHANNEL_MASK      = 1 << 24, ///< Supported channel mask changed
+    OT_CHANGED_BORDER_AGENT_STATE          = 1 << 25, ///< Border agent state changed
+    OT_CHANGED_THREAD_NETIF_STATE          = 1 << 26, ///< Thread network interface state changed
 };
 
 /**
@@ -356,35 +358,22 @@ OTAPI void OTCALL otInstanceFactoryReset(otInstance *aInstance);
 otError otInstanceErasePersistentInfo(otInstance *aInstance);
 
 /**
- * This function returns the current dynamic log level.
- *
- * @param[in]  aInstance A pointer to an OpenThread instance.
- *
- * @returns the currently set dynamic log level.
- *
- */
-otLogLevel otGetDynamicLogLevel(otInstance *aInstance);
-
-/**
- * This function sets the dynamic log level.
- *
- * @param[in]  aInstance A pointer to an OpenThread instance.
- * @param[in]  aLogLevel The dynamic log level.
- *
- * @retval OT_ERROR_NONE               The log level was changed successfully.
- * @retval OT_ERROR_DISABLED_FEATURE   The dynamic log level feature is disabled.
- *                                     (@sa `OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL` configuration option).
- *
- */
-otError otSetDynamicLogLevel(otInstance *aInstance, otLogLevel aLogLevel);
-
-/**
- * Get the OpenThread version string.
+ * This function gets the OpenThread version string.
  *
  * @returns A pointer to the OpenThread version.
  *
  */
 OTAPI const char *OTCALL otGetVersionString(void);
+
+/**
+ * This function gets the OpenThread radio version string.
+ *
+ * @param[in]  aInstance A pointer to an OpenThread instance.
+ *
+ * @returns A pointer to the OpenThread radio version.
+ *
+ */
+const char *otGetRadioVersionString(otInstance *aInstance);
 
 /**
  * @}

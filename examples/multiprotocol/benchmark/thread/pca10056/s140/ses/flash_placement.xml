@@ -50,7 +50,7 @@
     <ProgramSection alignment="8" size="__STACKSIZE__" load="No" place_from_segment_end="Yes" name=".stack"  address_symbol="__StackLimit" end_symbol="__StackTop"/>
     <ProgramSection alignment="8" size="__STACKSIZE_PROCESS__" load="No" name=".stack_process" />
   </MemorySegment>
-  <MemorySegment name="ot_flash_data" start="0x000fc000" size="0x4000">
-    <ProgramSection alignment="4" keep="Yes" load="No" name=".ot_flash_data" address_symbol="__start_ot_flash_data" end_symbol="__stop_ot_flash_data" start = "0x000fc000" size="0x4000" />
+  <MemorySegment name="ot_flash_data" start="0xfc000" size="0x4000">
+    <ProgramSection alignment="4" keep="Yes" load="Yes" name=".ot_flash_data" address_symbol="__start_ot_flash_data" end_symbol="__stop_ot_flash_data" start = "0xfc000" size="0x4000" />
   </MemorySegment>
 </Root>

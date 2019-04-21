@@ -62,17 +62,15 @@ extern "C" {
  * @defgroup api-net IPv6 Networking
  * @{
  *
- * @defgroup api-dhcp6 DHCPv6
- * @brief This module includes functions for DHCPv6 Client and Server.
  * @defgroup api-dns   DNSv6
  * @defgroup api-icmp6 ICMPv6
  * @defgroup api-ip6   IPv6
- * @defgroup api-udp-group UDP
+ * @defgroup api-udp-group   UDP
  *
  * @{
  *
- * @defgroup api-udp       UDP
- * @defgroup api-udp-proxy UDP Proxy
+ * @defgroup api-udp         UDP
+ * @defgroup api-udp-forward UDP Forward
  *
  * @}
  *
@@ -93,6 +91,7 @@ extern "C" {
  *
  * @{
  *
+ * @defgroup api-border-agent   Border Agent
  * @defgroup api-border-router  Border Router
  * @defgroup api-commissioner   Commissioner
  * @defgroup api-thread-general General
@@ -111,13 +110,23 @@ extern "C" {
  * @defgroup api-channel-manager     Channel Manager
  * @defgroup api-channel-monitor     Channel Monitoring
  * @defgroup api-child-supervision   Child Supervision
+ * @defgroup api-coap-group          CoAP
+ *
+ * @{
+ *
  * @defgroup api-coap                CoAP
+ * @defgroup api-coap-secure         CoAP Secure
+ *
+ * @}
+ *
  * @defgroup api-cli                 Command Line Interface
  * @defgroup api-crypto              Crypto
  * @defgroup api-factory-diagnostics Factory Diagnostics
  * @defgroup api-jam-detection       Jam Detection
+ * @defgroup api-logging             Logging
  * @defgroup api-ncp                 Network Co-Processor
  * @defgroup api-network-time        Network Time Synchronization
+ * @defgroup api-sntp                SNTP
  *
  * @}
  *
@@ -165,7 +174,8 @@ extern "C" {
  * This enumeration represents error codes used throughout OpenThread.
  *
  */
-typedef enum otError {
+typedef enum otError
+{
     /**
      * No error.
      */
@@ -303,7 +313,7 @@ typedef enum otError {
     OT_ERROR_NOT_CAPABLE = 27,
 
     /**
-     * Coap response or acknowledgment or DNS response not received.
+     * Coap response or acknowledgment or DNS, SNTP response not received.
      */
     OT_ERROR_RESPONSE_TIMEOUT = 28,
 

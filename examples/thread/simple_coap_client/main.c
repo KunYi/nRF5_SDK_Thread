@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -62,8 +62,10 @@
 #include <openthread/instance.h>
 #include <openthread/thread.h>
 
-#define SCHED_QUEUE_SIZE      32                              /**< Maximum number of events in the scheduler queue. */
-#define SCHED_EVENT_DATA_SIZE APP_TIMER_SCHED_EVENT_DATA_SIZE /**< Maximum app_scheduler event size. */
+#define SCHED_QUEUE_SIZE      32                                                      /**< Maximum number of events in the scheduler queue. */
+#define SCHED_EVENT_DATA_SIZE APP_TIMER_SCHED_EVENT_DATA_SIZE                         /**< Maximum app_scheduler event size. */
+
+static thread_coap_utils_light_command_t m_command = THREAD_COAP_UTILS_LIGHT_CMD_OFF; /**< This variable stores command that has been most recently used. */
 
 /***************************************************************************************************
  * @section Buttons
@@ -74,31 +76,21 @@ static void bsp_event_handler(bsp_event_t event)
     switch (event)
     {
         case BSP_EVENT_KEY_0:
-            thread_coap_utils_unicast_light_request_send(thread_ot_instance_get(), LIGHT_TOGGLE);
+            thread_coap_utils_unicast_light_request_send(THREAD_COAP_UTILS_LIGHT_CMD_TOGGLE);
             break;
 
         case BSP_EVENT_KEY_1:
         {
-            uint8_t command;
-            thread_coap_utils_mcast_light_on_toggle();
+            m_command = ((m_command == THREAD_COAP_UTILS_LIGHT_CMD_OFF) ? THREAD_COAP_UTILS_LIGHT_CMD_ON :
+                                                                          THREAD_COAP_UTILS_LIGHT_CMD_OFF);
 
-            if (thread_coap_utils_mcast_light_on_get())
-            {
-                command = LIGHT_ON;
-            }
-            else
-            {
-                command = LIGHT_OFF;
-            }
-
-            thread_coap_utils_multicast_light_request_send(thread_ot_instance_get(),
-                                                           command,
+            thread_coap_utils_multicast_light_request_send(m_command,
                                                            THREAD_COAP_UTILS_MULTICAST_REALM_LOCAL);
             break;
         }
 
         case BSP_EVENT_KEY_3:
-            thread_coap_utils_provisioning_request_send(thread_ot_instance_get());
+            thread_coap_utils_provisioning_request_send();
             break;
 
         default:
@@ -127,11 +119,6 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
                 thread_coap_utils_peer_addr_clear();
                 break;
         }
-    }
-
-    if (flags & OT_CHANGED_THREAD_PARTITION_ID)
-    {
-        thread_coap_utils_peer_addr_clear();
     }
 
     NRF_LOG_INFO("State changed! Flags: 0x%08x Current role: %d\r\n",
@@ -181,7 +168,7 @@ static void thread_instance_init(void)
 {
     thread_configuration_t thread_configuration =
     {
-        .role              = RX_ON_WHEN_IDLE,
+        .radio_mode        = THREAD_RADIO_MODE_RX_ON_WHEN_IDLE,
         .autocommissioning = true,
     };
 
@@ -195,11 +182,10 @@ static void thread_instance_init(void)
  */
 static void thread_coap_init(void)
 {
-    thread_coap_configuration_t thread_coap_configuration =
+    thread_coap_utils_configuration_t thread_coap_configuration =
     {
         .coap_server_enabled               = false,
         .coap_client_enabled               = true,
-        .coap_cloud_enabled                = false,
         .configurable_led_blinking_enabled = false,
     };
 

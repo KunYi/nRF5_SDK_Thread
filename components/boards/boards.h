@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2014 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -84,6 +84,10 @@
 #else
 #error "Board is not defined"
 
+#endif
+
+#if defined (SHIELD_BSP_INC)
+  #include STRINGIFY(SHIELD_BSP_INC.h)
 #endif
 
 #ifdef __cplusplus

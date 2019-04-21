@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -40,6 +40,7 @@
 #include "nrf_cli.h"
 #include "zboss_api.h"
 #include "zb_error_handler.h"
+#include "zigbee_logger_eprxzcl.h"
 #include <ctype.h>
 
 NRF_SECTION_DEF(zb_ep_handlers, zb_device_handler_t);
@@ -49,6 +50,8 @@ NRF_SECTION_DEF(zb_ep_handlers, zb_device_handler_t);
 zb_uint8_t cli_agent_ep_handler(zb_uint8_t param)
 {
     unsigned int idx;
+
+    UNUSED_RETURN_VALUE(zigbee_logger_eprxzcl_ep_handler(param));
 
     for (idx = 0; idx < ZB_EP_HANDLER_SECTION_ITEM_COUNT; idx++)
     {
@@ -62,7 +65,7 @@ zb_uint8_t cli_agent_ep_handler(zb_uint8_t param)
     return ZB_FALSE;
 }
 
-zb_bool_t parse_address_string(char * input, zb_addr_u * output, zb_uint8_t * addr_mode)
+zb_bool_t parse_address_string(const char * input, zb_addr_u * output, zb_uint8_t * addr_mode)
 {
     char byte[2 + 1]; /* Substring holding 1 byte */
     unsigned int chunk;
@@ -101,25 +104,6 @@ zb_void_t frame_acked_cb(zb_uint8_t param)
     {
         ZB_FREE_BUF_BY_REF(param);
     }
-}
-
-int ieee_addr_to_str(char * p_str_buf, uint16_t buf_len, zb_ieee_addr_t p_addr)
-{
-    int bytes_written = 0;
-    int status;
-
-    for (int i = sizeof(zb_ieee_addr_t) - 1; i >= 0; i--)
-    {
-        status = snprintf(p_str_buf + bytes_written, buf_len - bytes_written, "%02x", p_addr[i]);
-        if (status < 0)
-        {
-            return status;
-        }
-
-        bytes_written += status;
-    }
-
-    return bytes_written;
 }
 
 int zcl_attr_to_str(char * p_str_buf, uint16_t buf_len, zb_uint16_t attr_type, zb_uint8_t * p_attr)
@@ -214,5 +198,48 @@ int sscan_uint8(const char * p_bp, uint8_t * p_u8)
 
     *p_u8 = (uint8_t)u16;
 
+    return 1;
+}
+
+int parse_hex_str(char const * p_in_str, uint8_t * p_out_buff, uint8_t limit)
+{
+    uint8_t cnt             = 0;
+    uint8_t bytes_read_cnt  = 0;
+    uint8_t buffer          = 0;
+
+    while ((*p_in_str) && (bytes_read_cnt < limit))
+    {
+        if ((*p_in_str >= '0') && (*p_in_str <= '9'))
+        {
+            buffer = *p_in_str - '0';
+        }
+        else if ((*p_in_str >='a') && (*p_in_str <= 'f'))
+        {
+            /* By decreasing 'a' .. 'f' by 87, result is equal to letter in hex */
+            buffer = *p_in_str - 87;
+        }
+        else if ((*p_in_str >='A') && (*p_in_str <= 'F'))
+        {
+            char letter = tolower(*p_in_str);
+            buffer = letter - 87;
+        }
+        else
+        {
+            return 0;
+        }
+        if (cnt)
+        {
+            *p_out_buff += buffer;
+            p_out_buff++;
+            cnt = 0;
+            bytes_read_cnt++;
+        }
+        else
+        {
+            *p_out_buff = buffer << 4;
+            cnt = 1;
+        }
+        p_in_str++;
+    }
     return 1;
 }

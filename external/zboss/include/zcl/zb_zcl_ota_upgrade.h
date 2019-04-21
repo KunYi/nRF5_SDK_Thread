@@ -106,10 +106,11 @@ typedef ZB_PACKED_PRE struct zb_zcl_ota_upgrade_file_header_optional_s
   zb_uint16_t max_hw_version;     /**< Maximum hardware version - optional */
 } ZB_PACKED_STRUCT zb_zcl_ota_upgrade_file_header_optional_t;
 
-
-
+/** @cond internals_doc */
 #define ZB_ZCL_OTA_UPGRADE_FILE_HEADER_FULL_SIZE        \
     (sizeof(zb_zcl_ota_upgrade_file_header_t) + 2*sizeof(zb_uint16_t)+sizeof(zb_ieee_addr_t))
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /** @brief Default OTA Upgrade File Identifier, see spec 6.3.2.1 */
 #define ZB_ZCL_OTA_UPGRADE_FILE_HEADER_FILE_ID          0x0BEEF11E
@@ -712,7 +713,7 @@ enum zb_zcl_ota_upgrade_image_status_e
 {                                                       \
   ZB_ZCL_ATTR_OTA_UPGRADE_CLIENT_DATA_ID,               \
   ZB_ZCL_ATTR_TYPE_NULL,                                \
-  ZB_ZCL_ATTR_ACCESS_READ_ONLY,                         \
+  ZB_ZCL_ATTR_ACCESS_INTERNAL,                            \
   (zb_voidp_t) data_ptr                                 \
 }
 
@@ -736,11 +737,18 @@ enum zb_zcl_ota_upgrade_image_status_e
 {                                                       \
   ZB_ZCL_ATTR_OTA_UPGRADE_SERVER_DATA_ID,               \
   ZB_ZCL_ATTR_TYPE_NULL,                                \
-  ZB_ZCL_ATTR_ACCESS_READ_ONLY,                         \
+  ZB_ZCL_ATTR_ACCESS_INTERNAL,                          \
   (zb_voidp_t) data_ptr                                 \
 }
 
-/** @internal @brief Declare attribute list for OTA Upgrade cluster - client side
+/*! @internal Number of attributes mandatory for reporting in OTA Upgrade cluster */
+#define ZB_ZCL_OTA_UPGRADE_REPORT_ATTR_COUNT 0
+
+/*! @}
+  * @
+    @endcond endcond */ /* OTA Upgrade cluster internals */
+
+/** @brief Declare attribute list for OTA Upgrade cluster - client side
     @param attr_list - attribure list name
     @param upgrade_server - pointer to variable to store UpgradeServerID attribute
     @param file_offset - pointer to variable to store FileOffset attribute
@@ -753,7 +761,8 @@ enum zb_zcl_ota_upgrade_image_status_e
     @param image_type - pointer to variable to store Image Type ID attribute
     @param min_block_reque - pointer to variable to store MinimumBlockReque attribute
     @param image_stamp - pointer to variable to store Image Stamp attribute
-    @param server_short_addr - server short address
+    @param server_addr - server short address
+    @param server_ep - server endpoint
     @param hardware_version - (const) hardware version
     @param max_data_size - (const) maximum data size Query Block Image commands
     @param query_timer - (const) query timer count
@@ -781,7 +790,7 @@ enum zb_zcl_ota_upgrade_image_status_e
   ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_OTA_UPGRADE_CLIENT_DATA_ID,         &(client_var_##attr_list))   \
    ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
 
-/** @internal @brief Declare attribute list for OTA Upgrade cluster - server side
+/** @brief Declare attribute list for OTA Upgrade cluster - server side
     @param attr_list - attribure list name
     @param query_jitter - (8bit) pointer to variable to store QueryJitter value
     @param current_time - (32bit) pointer to variable to store CurrentTime
@@ -796,14 +805,6 @@ enum zb_zcl_ota_upgrade_image_status_e
   ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                             \
   ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_OTA_UPGRADE_SERVER_DATA_ID, &(server_var_##attr_list)) \
   ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
-
-
-/*! @internal Number of attributes mandatory for reporting in OTA Upgrade cluster */
-#define ZB_ZCL_OTA_UPGRADE_REPORT_ATTR_COUNT 0
-
-/*! @}
- * @
-    @endcond endcond */ /* OTA Upgrade cluster internals */
 
 /*! @} */ /* OTA Upgrade cluster attributes */
 
@@ -835,6 +836,7 @@ enum zb_zcl_ota_upgrade_resp_cmd_e
   ZB_ZCL_CMD_OTA_UPGRADE_QUERY_SPECIFIC_FILE_RESP_ID  = 0x09, /**< "Query Specific File Response" command */
 };
 
+/** @cond internals_doc */
 /* OTA Upgrade cluster commands list : only for information - do not modify */
 #define ZB_ZCL_CLUSTER_ID_OTA_UPGRADE_SERVER_ROLE_GENERATED_CMD_LIST                           \
                                               ZB_ZCL_CMD_OTA_UPGRADE_IMAGE_NOTIFY_ID,          \
@@ -857,6 +859,8 @@ enum zb_zcl_ota_upgrade_resp_cmd_e
                                               ZB_ZCL_CMD_OTA_UPGRADE_IMAGE_BLOCK_ID,           \
                                               ZB_ZCL_CMD_OTA_UPGRADE_UPGRADE_END_ID,           \
                                               ZB_ZCL_CMD_OTA_UPGRADE_QUERY_SPECIFIC_FILE_ID
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 
 /************************* Query Next Image Request **************************/
@@ -1875,7 +1879,7 @@ enum zb_zcl_ota_upgrade_status_e
                                                 // return that error code to the OTA cluster */
 };
 
-
+/** @cond internals_doc */
 #define ZB_ZCL_OTA_UPGRADE_START_USER_APP(buffer,                   \
   manufacturer_, image_type_, file_version_, file_length_, result)  \
 {                                                                   \
@@ -2029,6 +2033,8 @@ void zb_zcl_ota_set_file_size(zb_uint8_t endpoint, zb_uint32_t size);
 zb_uint16_t zb_zcl_ota_upgrade_get16(zb_uint8_t endpoint, zb_uint16_t attr_id);
 
 zb_uint32_t zb_zcl_ota_upgrade_get32(zb_uint8_t endpoint, zb_uint16_t attr_id);
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /*! @brief Abort OTA Upgrade process
  *

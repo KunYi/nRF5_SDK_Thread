@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 /** @file
  *
- * @defgroup zigbee_examples_thingy_master_zed_color_light_bulb ble_thingy_master.c
+ * @defgroup zigbee_examples_ble_zigbee_color_light_bulb_thingy ble_thingy_master.c
  * @{
  * @ingroup zigbee_examples
  * @brief Dynamic multiprotocol example application to demonstrate control on BLE device (peripheral role) using zigbee device.
@@ -59,28 +59,57 @@
 #include "ble_lbs_c.h"
 #include "ble_srv_common.h"
 #include "nrf_ble_gatt.h"
+#include "ble_db_discovery.h"
+#include "nrf_queue.h"
 
 #include "ble_thingy_master.h"
+
+#define WRITE_MESSAGE_LENGTH 5 /**< LED characteristic maximum size. */
+
+/**@brief Enumeration specifying type of GATT request. */
+typedef enum
+{
+    READ_REQ,      /**< Type identifying that this tx_message is a read request. */
+    WRITE_REQ      /**< Type identifying that this tx_message is a write request. */
+} tx_request_t;
+
+/**@brief Structure for writing a message to the peer, i.e. CCCD. */
+typedef struct
+{
+    uint8_t                  gattc_value[WRITE_MESSAGE_LENGTH];  /**< The message to write. */
+    ble_gattc_write_params_t gattc_params;                       /**< The GATTC parameters for this message. */
+} gatt_write_params_t;
+
+/**@brief Structure for holding the data that will be transmitted to the connected central. */
+typedef struct
+{
+    uint16_t     conn_handle;  /**< Connection handle to be used when transmitting this message. */
+    tx_request_t type;         /**< Type of message. (read or write). */
+    union
+    {
+        uint16_t            read_handle;  /**< Read request handle. */
+        gatt_write_params_t write_req;    /**< Write request message. */
+    } req;
+} gatt_tx_message_t;
 
 /** Usage of module
 /   Define thingy_device_t table                    thingy_device_t table_name[cnt]
 /   Init module using function:                     ble_thingy_master_init(table_name, cnt)
-/   To start module use:                            ble_thingy_master_start()
+/   To start module use:                            ble_thingy_master_scan()
 /   To control Thingy LED use:                      ble_thingy_master_update_led(...)
 **/
 
 /* Define timer to handle scanning timeout faster */
 APP_TIMER_DEF(m_ble_thingy_timer_id);
 
-/* Structure for discovery puposes */
-static ble_gattc_handle_range_t m_discovery_handler_range =
-{
-    .start_handle = BLE_GATT_HANDLE_START,
-    .end_handle = BLE_GATT_HANDLE_END
-};
+/* Define DB discovery module instance. */
+BLE_DB_DISCOVERY_DEF(m_db_disc);
+
+/* Define GATTC write/read operation queue. */
+NRF_QUEUE_DEF(gatt_tx_message_t, m_gatt_op_queue, APP_BLE_THINGY_MASTER_GATT_Q_SIZE, NRF_QUEUE_MODE_NO_OVERFLOW);
 
 /* Declare variables to contain 128-bit UUID  */
-static ble_uuid128_t m_vendor_uuid  = 
+static ble_uuid128_t m_vendor_uuid_base  =
 {
     .uuid128 =
         {
@@ -88,7 +117,8 @@ static ble_uuid128_t m_vendor_uuid  =
             0x33, 0x49, 0x35, 0x9B, 0x00, 0x00, 0x68, 0xEF
         }
 };
-static uint8_t m_vendor_uuid_type = BLE_UUID_TYPE_VENDOR_BEGIN;
+static uint8_t              m_vendor_uuid_type   = BLE_UUID_TYPE_VENDOR_BEGIN;
+static thingy_evt_handler_t m_thingy_dev_handler = NULL;
 
 /* Structure containing module internal variables to run device logic */
 typedef struct
@@ -136,9 +166,9 @@ static ble_data_t m_scan_buffer =
 };
 
 /**@brief Function for getting pointer to thingy device by conn_handler.
- * 
+ *
  * @param[IN]   conn_handler   Connection handler.
- * 
+ *
  * @returns     Pointer to matching thingy_device_t
  */
 static thingy_device_t * thingy_find_by_connection_handler(uint16_t conn_handler)
@@ -151,15 +181,15 @@ static thingy_device_t * thingy_find_by_connection_handler(uint16_t conn_handler
             return &m_ble_dev.p_dev_table[i];
         }
     }
-    
+
     return NULL;
 }
 
 /**@brief Handler to application timer.
- * 
+ *
  * @param[IN]   context   Context which function is called with, unused.
- * 
- * @details     Function is used to to stop scanning after amount of time defined in APP_BLE_THINGY_SCANNING_TIMEOUT 
+ *
+ * @details     Function is used to to stop scanning after amount of time defined in APP_BLE_THINGY_SCANNING_TIMEOUT
  *              if no matching device is found.
  */
 static void thingy_timer_handler(void * context)
@@ -167,34 +197,68 @@ static void thingy_timer_handler(void * context)
     UNUSED_PARAMETER(context);
     ret_code_t err_code = sd_ble_gap_scan_stop();
     APP_ERROR_CHECK(err_code);
-    
+
     // Change LED status to indicate about end of scanning
-    bsp_board_led_on(CENTRAL_CONNECTED_LED);
     bsp_board_led_off(CENTRAL_SCANNING_LED);
 
-    NRF_LOG_INFO("Scanning stopped due to user timeout")
+    NRF_LOG_INFO("Scan complete");
 }
 
-/**@brief Function for getting pointer to not connected thingy device.
- * 
+/**@brief Acquire a Thingy object.
+ *
+ * Get an unconnected Thingy object and mark it as connected by using
+ * specifed connection handle.
+ *
+ * @param[in] conn_handle BLE connection handle.
+ *
  * @returns Pointer to thingy_device_t.
  */
-static thingy_device_t * thingy_acquire(void)
+static thingy_device_t * thingy_acquire(uint16_t conn_handle)
 {
     // Search for matching conn_handler
     for (uint8_t i = 0; i < m_ble_dev.thingy_dev_cnt; i++)
     {
         if (m_ble_dev.p_dev_table[i].conn_handle == APP_BLE_CONN_HANDLER_DEFAULT)
         {
+            m_ble_dev.p_dev_table[i].conn_handle = conn_handle;
             return &m_ble_dev.p_dev_table[i];
         }
     }
-    
+
     return NULL;
 }
 
-/**
- * @brief Function to handle asserts in the SoftDevice.
+/**@brief Release (mark as unused) Thingy object.
+ *
+ * @parm[in] p_thingy a pointer to Thingy object.
+ *
+ */
+static inline void thingy_release(thingy_device_t * p_thingy)
+{
+    p_thingy->conn_handle = APP_BLE_CONN_HANDLER_DEFAULT;
+}
+
+/**@brief Return number of connected Thingy devices.
+ *
+ * @return number of connected Thingy devices.
+ */
+static inline uint8_t thingy_connected_count(void)
+{
+    int n = 0;
+
+    // Search for matching conn_handler
+    for (uint8_t i = 0; i < m_ble_dev.thingy_dev_cnt; i++)
+    {
+        if (m_ble_dev.p_dev_table[i].conn_handle != APP_BLE_CONN_HANDLER_DEFAULT)
+        {
+            n++;
+        }
+    }
+
+    return n;
+}
+
+/**@brief Function to handle asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
  *
@@ -211,7 +275,7 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 }
 
 /**@brief Function for handling the advertising report BLE event.
- * 
+ *
  * @param[IN] p_adv_report Advertising report from the SoftDevice.
  */
 static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
@@ -237,7 +301,7 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
 }
 
 /**@brief Function to handle device_connected event.
- * 
+ *
  * @param[IN] p_ble_evt    Pointer to ble event structure.
  */
 static void thingy_on_connected(ble_evt_t const * p_ble_evt)
@@ -245,34 +309,30 @@ static void thingy_on_connected(ble_evt_t const * p_ble_evt)
     // Stop timer to prevent unexpected scan_stop
     ret_code_t err_code = app_timer_stop(m_ble_thingy_timer_id);
     APP_ERROR_CHECK(err_code);
-    
+
     // Get pointer to disconnected thingy device
-    thingy_device_t * p_thingy = thingy_acquire();
+    thingy_device_t * p_thingy = thingy_acquire(p_ble_evt->evt.gap_evt.conn_handle);
     if (p_thingy != NULL)
     {
-        p_thingy->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-        
-        NRF_LOG_INFO("Thingy connected");
 
-        // Reset handler range discovery to default value
-        m_discovery_handler_range.start_handle = BLE_GATT_HANDLE_START;
+        NRF_LOG_INFO("Connected to Thingy (conn_handle: %d)", p_ble_evt->evt.gap_evt.conn_handle);
+
         // Start discovery of characteristics
-        err_code = sd_ble_gattc_characteristics_discover(p_ble_evt->evt.gattc_evt.conn_handle, &m_discovery_handler_range);
+        err_code = ble_db_discovery_start(&m_db_disc, p_ble_evt->evt.gap_evt.conn_handle);
         APP_ERROR_CHECK(err_code);
 
         // Update LEDs status, and check if we should be looking for more
         // peripherals to connect to.
-        bsp_board_led_on(CENTRAL_CONNECTED_LED);
         bsp_board_led_off(CENTRAL_SCANNING_LED);
     }
     else
     {
-         NRF_LOG_INFO("Can't connect thingy, maximum number of connections reached");
+         NRF_LOG_INFO("Can't connect more Thingy devices");
     }
 }
 
 /**@brief Function to handle device_disconnected event.
- * 
+ *
  * @param[IN] p_ble_evt   Pointer to ble event structure.
  * @param[IN] p_thingy    Pointer to thingy device.
  */
@@ -281,77 +341,309 @@ static void thingy_on_disconnected(ble_evt_t const * p_ble_evt, thingy_device_t 
     // Stop timer to restart it correctly later
     ret_code_t err_code = app_timer_stop(m_ble_thingy_timer_id);
     APP_ERROR_CHECK(err_code);
-    
-    NRF_LOG_INFO("Disconnected.");
+
+    NRF_LOG_INFO("Thingy disconnected (conn_handle: %d)", p_thingy->conn_handle);
+
     // Free thingy connection if disconnected
     if (p_thingy != NULL)
     {
-        p_thingy->conn_handle = APP_BLE_CONN_HANDLER_DEFAULT;
+        thingy_release(p_thingy);
     }
-    // Check if any thingy connection is available
-    if (thingy_acquire() != NULL)
+
+    if (thingy_connected_count() == 0)
     {
-        NRF_LOG_INFO("Searching for thingy");
-        ble_thingy_master_start();
-        //Start timer to stop scanning after temieout defined in APP_BLE_THINGY_SCANNING_TIMEOUT if no other device is in range
-        err_code = app_timer_start(m_ble_thingy_timer_id,
-                                   APP_TIMER_TICKS(APP_BLE_THINGY_SCANNING_TIMEOUT),
-                                   NULL);
+        bsp_board_led_off(CENTRAL_CONNECTED_LED);
+    }
+
+    if (m_thingy_dev_handler)
+    {
+        m_thingy_dev_handler(p_thingy, THINGY_DISCONNECTED);
+    }
+
+}
+
+/**@brief Function for passing any pending request from the buffer to the stack.
+ *
+ * @param[in] pop_head  Booloean flag, specifying if the topmost elemnt was
+ *                      successfully sent.
+ */
+static void gatt_op_queue_process(bool pop_head)
+{
+    gatt_tx_message_t message;
+    ret_code_t        err_code;
+
+    if ((pop_head == true) && (nrf_queue_utilization_get(&m_gatt_op_queue) > 0))
+    {
+        err_code = nrf_queue_pop(&m_gatt_op_queue, &message);
         APP_ERROR_CHECK(err_code);
+    }
+
+    err_code = nrf_queue_peek(&m_gatt_op_queue, &message);
+    if (err_code != NRF_SUCCESS)
+    {
+        return;
+    }
+
+    if (message.type == READ_REQ)
+    {
+        NRF_LOG_DEBUG("Gatt read (conn_handle: %d)", message.conn_handle);
+        err_code = sd_ble_gattc_read(message.conn_handle,
+                                     message.req.read_handle,
+                                     0);
     }
     else
     {
-        NRF_LOG_INFO("Can not connect more thingy");
+        NRF_LOG_DEBUG("Gatt write (conn_handle: %d)", message.conn_handle);
+        message.req.write_req.gattc_params.p_value = message.req.write_req.gattc_value;
+
+        err_code = sd_ble_gattc_write(message.conn_handle,
+                                      &message.req.write_req.gattc_params);
+    }
+
+    if (err_code == NRF_SUCCESS)
+    {
+        NRF_LOG_DEBUG("SD Read/Write API returns Success");
+    }
+    else
+    {
+        NRF_LOG_DEBUG("SD Read/Write API returns error. This message sending will be "
+            "attempted again");
     }
 }
 
-/**@brief Function to handle GATTC Characteristic Discovery Response event.
- * 
+/**@brief Function for adding new pending request to the queue.
+ *
+ * @param[in] p_message  Pointer to the structure with new request.
+ *
+ * @returns NRF_SUCCESS if the new request was successfuly unqueued.
+ */
+static ret_code_t gatt_op_queue_push(gatt_tx_message_t * p_message)
+{
+    ret_code_t err_code = NRF_SUCCESS;
+
+    NRF_LOG_INFO("Schedule GATT operation (in queue: %d)", nrf_queue_utilization_get(&m_gatt_op_queue));
+
+    err_code = nrf_queue_push(&m_gatt_op_queue, p_message);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    // If no operation is pending, send request immediately.
+    if (nrf_queue_utilization_get(&m_gatt_op_queue) == 1)
+    {
+        gatt_op_queue_process(false);
+    }
+
+    return err_code;
+}
+
+/**@brief Function for configuring the CCCD.
+ *
+ * @param[in] conn_handle The connection handle on which to configure the CCCD.
+ * @param[in] handle_cccd The handle of the CCCD to be configured.
+ * @param[in] enable      Whether to enable or disable the CCCD.
+ *
+ * @return NRF_SUCCESS if the CCCD configure was successfully sent to the peer.
+ */
+static uint32_t cccd_configure(uint16_t conn_handle, uint16_t handle_cccd, bool enable)
+{
+    uint16_t cccd_value = enable ? BLE_GATT_HVX_NOTIFICATION : 0;
+
+    gatt_tx_message_t cccd_configure_message =
+    {
+        .conn_handle = conn_handle,
+        .type        = WRITE_REQ,
+        .req         =
+        {
+            .write_req =
+            {
+                .gattc_value  =
+                {
+                    LSB_16(cccd_value),
+                    MSB_16(cccd_value)
+                },
+                .gattc_params =
+                {
+                    .write_op = BLE_GATT_OP_WRITE_REQ,
+                    .flags    = BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE,
+                    .handle   = handle_cccd,
+                    .offset   = 0,
+                    .len      = BLE_CCCD_VALUE_LEN
+                }
+
+            }
+        }
+    };
+
+    return gatt_op_queue_push(&cccd_configure_message);
+}
+
+/**@brief Function for handling Handle Value Notification received from the SoftDevice.
+ *
+ * @details This function will uses the Handle Value Notification received from the SoftDevice
+ *          and checks if it is a notification of Button state from the peer. If
+ *          it is, this function will decode the state of the button and send it to the
+ *          application.
+ *
+ * @param[in] p_thingy    Pointer to the Thingy device structure.
+ * @param[in] p_ble_evt   Pointer to the BLE event received.
+ */
+static void on_thingy_hvx(thingy_device_t * p_thingy, ble_evt_t const * p_ble_evt)
+{
+    const ble_gattc_evt_hvx_t * p_hvx = &p_ble_evt->evt.gattc_evt.params.hvx;
+
+    NRF_LOG_DEBUG("HVX handle=%d type=%d len=%d",
+                  p_hvx->handle, p_hvx->type, p_hvx->len);
+
+    ASSERT(m_thingy_dev_handler != NULL);
+
+    // Check if this is a Button notification.
+    if (p_hvx->handle == p_thingy->button.handle)
+    {
+        if (p_hvx->len == 1)
+        {
+            NRF_LOG_INFO("Button state update: %d", p_hvx->data[0]);
+            switch (p_hvx->data[0])
+            {
+                case 0:
+                    m_thingy_dev_handler(p_thingy, THINGY_BUTTON_RELEASED);
+                    break;
+
+                case 1:
+                    m_thingy_dev_handler(p_thingy, THINGY_BUTTON_PRESSED);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        else
+        {
+            NRF_LOG_ERROR("Invalid data length");
+        }
+    }
+    else
+    {
+        NRF_LOG_ERROR("Invalid handle");
+    }
+}
+
+/**@brief Function for handling Bluetooth discovery database events.
+ *
+ * @param[in] p_thingy  Pointer to the Thingy device structure.
+ * @param[in] p_evt     Pointer to the BLE discovery DB event.
+ */
+void thingy_on_db_disc_evt(thingy_device_t * p_thingy, ble_db_discovery_evt_t const * p_evt)
+{
+    uint32_t err_code;
+
+    if (p_evt->evt_type != BLE_DB_DISCOVERY_COMPLETE)
+    {
+        return;
+    }
+
+    NRF_LOG_INFO("BLE discovery completed. Serivce UUID: 0x%x Type: 0x%x", p_evt->params.discovered_db.srv_uuid.uuid, p_evt->params.discovered_db.srv_uuid.type);
+
+    for (uint32_t i = 0; i < p_evt->params.discovered_db.char_count; i++)
+    {
+        const ble_gatt_db_char_t * p_char = &(p_evt->params.discovered_db.charateristics[i]);
+
+        // Look for VENDOR specific characteristic: Thingy LED and button.
+        if (p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_THINGY_SERVICE &&
+            p_evt->params.discovered_db.srv_uuid.type == m_vendor_uuid_type)
+        {
+            switch (p_char->characteristic.uuid.uuid)
+            {
+                case BLE_UUID_THINGY_LED_CHAR:
+                    p_thingy->led.handle = p_char->characteristic.handle_value;
+                    NRF_LOG_INFO("Found %s characteristic handle: %hd", p_thingy->led.name, p_thingy->led.handle);
+                    break;
+
+                case BLE_UUID_THINGY_BUTTON_CHAR:
+                    p_thingy->button.handle      = p_char->characteristic.handle_value;
+                    p_thingy->button_cccd.handle = p_char->cccd_handle;
+
+                    err_code = cccd_configure(p_evt->conn_handle, p_thingy->button_cccd.handle, true);
+                    APP_ERROR_CHECK(err_code);
+
+                    NRF_LOG_INFO("Found %s characteristic handle: %hd cccd: %hd", p_thingy->button.name, p_thingy->button.handle, p_thingy->button_cccd.handle);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        // Look for SIG specific characteristic: Battery level.
+        else if (p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_BATTERY_SERVICE &&
+                 p_evt->params.discovered_db.srv_uuid.type == BLE_UUID_TYPE_BLE)
+        {
+            switch (p_char->characteristic.uuid.uuid)
+            {
+                case BLE_UUID_BATTERY_LEVEL_CHAR:
+                    p_thingy->battery_level.handle = p_char->characteristic.handle_value;
+                    NRF_LOG_INFO("Found %s characteristic handle: %hd", p_thingy->battery_level.name, p_thingy->battery_level.handle);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+/**@brief Function for handling database discovery events.
+ *
+ * @details This function is callback function to handle events from the database discovery module.
+ *          Depending on the UUIDs that are discovered, this function should forward the events
+ *          to their respective services.
+ *
+ * @param[in] p_event  Pointer to the database discovery event.
+ */
+static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
+{
+    thingy_device_t * p_thingy;
+
+    p_thingy = thingy_find_by_connection_handler(p_evt->conn_handle);
+
+    // Check if this connection handle has assigned thingy device
+    if (p_thingy != NULL)
+    {
+        thingy_on_db_disc_evt(p_thingy, p_evt);
+    }
+}
+
+/**@brief Function to handle GATTC write response.
+ *
  * @param[IN] p_thingy    Pointer to thingy device.
  * @param[IN] p_gattc_evt Pointer to GATTC event structure.
  */
-static void thingy_on_characterisics_discovery_response(thingy_device_t * p_thingy, ble_gattc_evt_t const * p_gattc_evt)
+static void thingy_on_write_response(thingy_device_t * p_thingy, ble_gattc_evt_t const * p_gattc_evt)
 {
-    ret_code_t               err_code;
-    const ble_gattc_char_t * p_char_data = &p_gattc_evt->params.char_disc_rsp.chars[0];
-
     if (p_gattc_evt->gatt_status == BLE_GATT_STATUS_SUCCESS)
     {
-        // Look for VENDOR specific characteristic: Thingy LED
-        if (p_char_data->uuid.type == BLE_UUID_TYPE_VENDOR_BEGIN)
+        ret_code_t err_code;
+        // If thingy button notifications are enabled, read battery level value
+        if (p_gattc_evt->params.write_rsp.handle == p_thingy->button_cccd.handle)
         {
-            if (p_char_data->uuid.uuid == BLE_UUID_THINGY_LED_CHAR)
-            {
-                p_thingy->led.handle = p_char_data->handle_value;
-                NRF_LOG_INFO("Found %s characteristic handle: %hd", p_thingy->led.name, p_thingy->led.handle);
-            }
-        }
+            NRF_LOG_INFO("Notifications on Thingy button press enabled");
 
-        // Look for SIG specific characteristic: Battery level
-        else if (p_char_data->uuid.type == BLE_UUID_TYPE_BLE)
-        {
-            if (p_char_data->uuid.uuid == BLE_UUID_BATTERY_LEVEL_CHAR)
+            gatt_tx_message_t read_battery_level_message =
             {
-                p_thingy->battery_level.handle = p_char_data->handle_value;
-                NRF_LOG_INFO("Found %s characteristic handle: %hd", p_thingy->battery_level.name, p_thingy->battery_level.handle);
-            }
-        }
+                .conn_handle     = p_gattc_evt->conn_handle,
+                .type            = READ_REQ,
+                .req.read_handle = p_thingy->battery_level.handle
+            };
 
-        // Prepare for discovering remaining characteristics
-        m_discovery_handler_range.start_handle = p_char_data->handle_value;
-        err_code = sd_ble_gattc_characteristics_discover(p_gattc_evt->conn_handle, &m_discovery_handler_range);
-        APP_ERROR_CHECK(err_code);
-    }
-    // If no more characteristics are found read battery level value
-    else if (p_gattc_evt->gatt_status == BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_FOUND)
-    {
-        err_code = sd_ble_gattc_read(p_gattc_evt->conn_handle, p_thingy->battery_level.handle, 0);
-        APP_ERROR_CHECK(err_code);
+            err_code = gatt_op_queue_push(&read_battery_level_message);
+            APP_ERROR_CHECK(err_code);
+        }
     }
 }
 
 /**@brief Function to handle GATTC read response.
- * 
+ *
  * @param[IN] p_thingy    Pointer to thingy device.
  * @param[IN] p_gattc_evt Pointer to GATTC event structure.
  */
@@ -368,48 +660,39 @@ static void thingy_on_read_response(thingy_device_t * p_thingy, ble_gattc_evt_t 
             APP_ERROR_CHECK(err_code);
         }
 
-        if (p_gattc_evt->params.read_rsp.handle == p_thingy->led.handle)
+        else if (p_gattc_evt->params.read_rsp.handle == p_thingy->led.handle)
         {
             const uint8_t * ptr             = p_gattc_evt->params.read_rsp.data;
             /* Structure containing data to write to Thingy LED characteristic to set LED to red color */
             const led_params_t led_params   =
             {
-                .mode       = APP_BLE_THINGY_LED_MODE_CONSTANT,
+                .mode       = LED_MODE_CONSTANT,
                 {
                     {
-                        .r_value    = 255,
-                        .g_value    = 0,
-                        .b_value    = 0
+                        .r = 255,
+                        .g = 0,
+                        .b = 0
                     }
                 }
             };
-            
+
             /*lint -e415 -e416 */
             NRF_LOG_INFO("LED mode: %02X value: %02X%02X%02X%02X", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4]);
             /*lint -restore */
 
             ble_thingy_master_update_led(p_thingy, &led_params);
+            bsp_board_led_on(CENTRAL_CONNECTED_LED);
 
-            if (thingy_acquire() != NULL)
+            if (m_thingy_dev_handler)
             {
-                NRF_LOG_INFO("Searching for another one");
-                ble_thingy_master_start();
-                //Start timer to stop scanning after temieout defined in APP_BLE_THINGY_SCANNING_TIMEOUT if no other device is in range
-                err_code = app_timer_start(m_ble_thingy_timer_id,
-                                           APP_TIMER_TICKS(APP_BLE_THINGY_SCANNING_TIMEOUT),
-                                           NULL);
-                APP_ERROR_CHECK(err_code);
-            }
-            else
-            {
-                NRF_LOG_INFO("Searching is done");
+                m_thingy_dev_handler(p_thingy, THINGY_CONNECTED);
             }
         }
     }
 }
 
 /**@brief Function for handling BLE events.
- * 
+ *
  * @param[IN]   p_ble_evt   Bluetooth stack event.
  * @param[IN]   p_context   Unused.
  */
@@ -425,47 +708,40 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         .tx_phys = BLE_GAP_PHY_AUTO
     };
 
+    NRF_LOG_DEBUG("BLE evt=%d", p_ble_evt->header.evt_id);
+
     p_thingy = thingy_find_by_connection_handler(p_gap_evt->conn_handle);
 
     switch (p_ble_evt->header.evt_id)
     {
         // discovery, update LEDs status and resume scanning if necessary. */
         case BLE_GAP_EVT_CONNECTED:
-
             // Check if this connection handle has assigned thingy device
             if (p_thingy == NULL)
             {
                 thingy_on_connected(p_ble_evt);
-            }
-            else
-            {
-                NRF_LOG_INFO("Found thingy is already connected");
             }
             break;
 
         // Upon disconnection, reset the connection handle of the peer which disconnected, update
         // the LEDs status and start scanning again.
         case BLE_GAP_EVT_DISCONNECTED:
-
             thingy_on_disconnected(p_ble_evt, p_thingy);
             break;
 
         case BLE_GAP_EVT_ADV_REPORT:
-
             on_adv_report(&p_gap_evt->params.adv_report);
             break;
 
         case BLE_GAP_EVT_TIMEOUT:
-
             // We have not specified a timeout for scanning, so only connection attemps can timeout.
             if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
             {
-                NRF_LOG_DEBUG("Connection request timed out.");
+                NRF_LOG_DEBUG("Connection request timed out");
             }
             break;
 
         case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
-
             // Accept parameters requested by peer.
             err_code = sd_ble_gap_conn_param_update(p_gap_evt->conn_handle,
                                                     &p_gap_evt->params.conn_param_update_request.conn_params);
@@ -473,68 +749,67 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
-
-            NRF_LOG_DEBUG("PHY update request.");
+            NRF_LOG_DEBUG("PHY update request");
             err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
             APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_GATTC_EVT_TIMEOUT:
-
             // Disconnect on GATT Client timeout event.
-            NRF_LOG_DEBUG("GATT Client Timeout.");
+            NRF_LOG_DEBUG("GATT Client Timeout");
             err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle,
                                              BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
             APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_GATTS_EVT_TIMEOUT:
-
             // Disconnect on GATT Server timeout event.
-            NRF_LOG_DEBUG("GATT Server Timeout.");
+            NRF_LOG_DEBUG("GATT Server Timeout");
             err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
                                              BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
             APP_ERROR_CHECK(err_code);
 
             break;
 
-        case BLE_GATTC_EVT_CHAR_DISC_RSP:
-
+        case BLE_GATTC_EVT_WRITE_RSP:
             if (p_thingy != NULL)
             {
-                thingy_on_characterisics_discovery_response(p_thingy, &p_ble_evt->evt.gattc_evt);
+                thingy_on_write_response(p_thingy, &p_ble_evt->evt.gattc_evt);
             }
             else
             {
                 NRF_LOG_INFO("Unrecognised Thingy device");
             }
+
+            NRF_LOG_INFO("GATT write completed. Status: %d", p_ble_evt->evt.gattc_evt.gatt_status);
+            gatt_op_queue_process(p_ble_evt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_SUCCESS);
             break;
 
         case BLE_GATTC_EVT_READ_RSP:
-
             if (p_thingy != NULL)
             {
                 thingy_on_read_response(p_thingy, &p_ble_evt->evt.gattc_evt);
             }
             else
             {
-                NRF_LOG_INFO("Unrecognised Thingy device")
+                NRF_LOG_INFO("Unrecognised Thingy device");
             }
+
+            NRF_LOG_INFO("GATT read completed. Status: %d", p_ble_evt->evt.gattc_evt.gatt_status);
+            gatt_op_queue_process(p_ble_evt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_SUCCESS);
             break;
 
         case BLE_GATTC_EVT_WRITE_CMD_TX_COMPLETE:
-
             if (p_ble_evt->evt.gattc_evt.gatt_status != BLE_GATT_STATUS_SUCCESS)
             {
                 NRF_LOG_INFO("Error while sending data");
             }
             break;
 
-        case BLE_GATTC_EVT_WRITE_RSP:
-
-            if (p_ble_evt->evt.gattc_evt.gatt_status != BLE_GATT_STATUS_SUCCESS)
+        case BLE_GATTC_EVT_HVX:
+            if (p_thingy != NULL)
             {
-                NRF_LOG_INFO("Error while writing data");
+                on_thingy_hvx(p_thingy, p_ble_evt);
             }
             break;
 
@@ -545,7 +820,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 }
 
 /**@brief Function for initializing the BLE stack.
- * 
+ *
  * @details Initializes the SoftDevice and the BLE event interrupts.
  */
 static void ble_stack_init(void)
@@ -569,9 +844,7 @@ static void ble_stack_init(void)
     NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 }
 
-/**@brief Function to init internal thingy device structures.
- * 
- */
+/**@brief Function to init internal thingy device structures. */
 static void thingy_struct_init(void)
 {
     if (m_ble_dev.p_dev_table != NULL)
@@ -580,11 +853,17 @@ static void thingy_struct_init(void)
         {
             m_ble_dev.p_dev_table[i].battery_level.handle = 0;
             memcpy(m_ble_dev.p_dev_table[i].battery_level.name, "BATTERY", 8);
-            
+
             m_ble_dev.p_dev_table[i].conn_handle = APP_BLE_CONN_HANDLER_DEFAULT;
-            
+
             m_ble_dev.p_dev_table[i].led.handle = 0;
             memcpy(m_ble_dev.p_dev_table[i].led.name, "LED", 4);
+
+            m_ble_dev.p_dev_table[i].button.handle = 0;
+            memcpy(m_ble_dev.p_dev_table[i].button.name, "BUTTON", 7);
+
+            m_ble_dev.p_dev_table[i].button_cccd.handle = 0;
+            memcpy(m_ble_dev.p_dev_table[i].button_cccd.name, "BUTTON_NOTIFICATION", 20);
         }
     }
     else
@@ -593,20 +872,33 @@ static void thingy_struct_init(void)
     }
 }
 
-void ble_thingy_master_timer_init(void)
+/**@brief Database discovery initialization. */
+static void db_discovery_init(void)
 {
-    ret_code_t err_code = app_timer_init();
+    ble_uuid_t vendor_uuid;
+    ret_code_t err_code;
+
+    err_code = ble_db_discovery_init(db_disc_handler);
     APP_ERROR_CHECK(err_code);
 
-    err_code = app_timer_create(&m_ble_thingy_timer_id, APP_TIMER_MODE_SINGLE_SHOT, thingy_timer_handler);
+    vendor_uuid.type = m_vendor_uuid_type;
+    vendor_uuid.uuid = BLE_UUID_THINGY_SERVICE;
+    err_code = ble_db_discovery_evt_register(&vendor_uuid);
+    APP_ERROR_CHECK(err_code);
+
+    vendor_uuid.type = BLE_UUID_TYPE_BLE;
+    vendor_uuid.uuid = BLE_UUID_BATTERY_SERVICE;
+    err_code = ble_db_discovery_evt_register(&vendor_uuid);
     APP_ERROR_CHECK(err_code);
 }
 
 void ble_thingy_master_update_led(thingy_device_t * p_thingy, const led_params_t * p_led_params)
 {
     /* Structure containing write parameters required to write data to characteristic */
-    ble_gattc_write_params_t m_led_write_params;
-    
+    gatt_tx_message_t          led_write_message;
+    ble_gattc_write_params_t * p_led_write_params = &led_write_message.req.write_req.gattc_params;
+    ret_code_t                 err_code;
+
     /* Check if pointer to thingy device and rgb_values are not NULL */
     if ((p_thingy == NULL) || (p_led_params == NULL))
     {
@@ -619,45 +911,73 @@ void ble_thingy_master_update_led(thingy_device_t * p_thingy, const led_params_t
         NRF_LOG_INFO("Thingy not connected");
         return;
     }
-    
+
+    /* Specify type and handler of scheduled operation. */
+    led_write_message.conn_handle = p_thingy->conn_handle;
+    led_write_message.type        = WRITE_REQ;
+
     /* Update params to write request */
-    m_led_write_params.len      = (p_led_params->mode == APP_BLE_THINGY_LED_MODE_CONSTANT) ? 4 : 5;  /* Length of data (in bytes) to write to LED characteristic depends of LED mode */
-    m_led_write_params.write_op = BLE_GATT_OP_WRITE_REQ;
-    m_led_write_params.flags    = BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE;
-    m_led_write_params.offset   = 0;
-    m_led_write_params.p_value  = (uint8_t *)p_led_params;
-    m_led_write_params.handle   = p_thingy->led.handle;
-    
-    ret_code_t err_code = sd_ble_gattc_write(p_thingy->conn_handle,
-                                            &m_led_write_params);
+    p_led_write_params->len      = (p_led_params->mode == LED_MODE_CONSTANT) ? 4 : 5;  /* Length of data (in bytes) to write to LED characteristic depends of LED mode */
+    p_led_write_params->write_op = BLE_GATT_OP_WRITE_REQ;
+    p_led_write_params->flags    = BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE;
+    p_led_write_params->offset   = 0;
+    p_led_write_params->handle   = p_thingy->led.handle;
+    memcpy(led_write_message.req.write_req.gattc_value, (uint8_t *)p_led_params, p_led_write_params->len);
+
+    NRF_LOG_INFO("Set Thingy LED mode %d", p_led_params->mode);
+
+    err_code = gatt_op_queue_push(&led_write_message);
     APP_ERROR_CHECK(err_code);
 }
 
-ret_code_t ble_thingy_master_init(thingy_device_t * p_thingy_dev_table, uint8_t thingy_cnt)
+ret_code_t ble_thingy_master_init(thingy_device_t * p_thingy_dev_table, uint8_t thingy_cnt, thingy_evt_handler_t evt_handler)
 {
     ret_code_t err_code;
+
+    /* Store thingy devices event handler. */
+    m_thingy_dev_handler = evt_handler;
 
     /* Assign thingy_dev_table to m_ble_dev */
     m_ble_dev.p_dev_table    = p_thingy_dev_table;
     m_ble_dev.thingy_dev_cnt = thingy_cnt;
+
     thingy_struct_init();
     ble_stack_init();
-    err_code =  sd_ble_uuid_vs_add(&m_vendor_uuid, &m_vendor_uuid_type);
+    db_discovery_init();
 
+    err_code = app_timer_create(&m_ble_thingy_timer_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                thingy_timer_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code =  sd_ble_uuid_vs_add(&m_vendor_uuid_base, &m_vendor_uuid_type);
     return err_code;
 }
 
-void ble_thingy_master_start(void)
+void ble_thingy_master_scan(uint8_t timeout)
 {
     ret_code_t err_code;
 
-    UNUSED_RETURN_VALUE(sd_ble_gap_scan_stop());
+    if (thingy_acquire(APP_BLE_CONN_HANDLER_DEFAULT))
+    {
+        NRF_LOG_INFO("Start scan for %d seconds", timeout);
 
-    err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
-    APP_ERROR_CHECK(err_code);
+        UNUSED_RETURN_VALUE(sd_ble_gap_scan_stop());
 
-    bsp_board_led_off(CENTRAL_CONNECTED_LED);
-    bsp_board_led_on(CENTRAL_SCANNING_LED);
+        err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
+        APP_ERROR_CHECK(err_code);
+
+        err_code = app_timer_start(m_ble_thingy_timer_id,
+                                   APP_TIMER_TICKS((uint32_t)timeout*1000),
+                                   NULL);
+        APP_ERROR_CHECK(err_code);
+
+        bsp_board_led_on(CENTRAL_SCANNING_LED);
+    }
+    else
+    {
+        NRF_LOG_INFO("Can't connect more Thingy devices");
+    }
 }
 
 

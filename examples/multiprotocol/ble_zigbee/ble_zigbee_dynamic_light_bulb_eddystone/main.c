@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -52,6 +52,7 @@
 #include "zb_mem_config_med.h"
 #include "zb_ha_dimmable_light.h"
 #include "zb_error_handler.h"
+#include "zigbee_helpers.h"
 
 #include "nrf_ble_es.h"
 #include "nrf_ble_gatt.h"
@@ -142,13 +143,13 @@ typedef struct
     zb_uint8_t power_source;
     zb_char_t  location_id[17];
     zb_uint8_t ph_env;
+    zb_char_t  sw_ver[17];
 } bulb_device_basic_attr_t;
 
 /* Identify cluster attributes. */
 typedef struct
 {
     zb_uint16_t identify_time;
-    zb_uint8_t  commission_state;
 } bulb_device_identify_attr_t;
 
 /* ON/Off cluster attributes. */
@@ -198,9 +199,7 @@ typedef struct
 APP_PWM_INSTANCE(BULB_PWM_NAME, BULB_PWM_TIMER);
 static bulb_device_ctx_t m_dev_ctx;
 
-ZB_ZCL_DECLARE_IDENTIFY_ATTRIB_LIST_HA(identify_attr_list,
-                                       &m_dev_ctx.identify_attr.identify_time,
-                                       &m_dev_ctx.identify_attr.commission_state);
+ZB_ZCL_DECLARE_IDENTIFY_ATTRIB_LIST(identify_attr_list, &m_dev_ctx.identify_attr.identify_time);
 
 
 ZB_ZCL_DECLARE_GROUPS_ATTRIB_LIST(groups_attr_list, &m_dev_ctx.groups_attr.name_support);
@@ -212,19 +211,20 @@ ZB_ZCL_DECLARE_SCENES_ATTRIB_LIST(scenes_attr_list,
                                   &m_dev_ctx.scenes_attr.scene_valid,
                                   &m_dev_ctx.scenes_attr.name_support);
 
-ZB_ZCL_DECLARE_BASIC_ATTRIB_LIST_HA_ADDS_FULL(basic_attr_list,
-                                              &m_dev_ctx.basic_attr.zcl_version,
-                                              &m_dev_ctx.basic_attr.app_version,
-                                              &m_dev_ctx.basic_attr.stack_version,
-                                              &m_dev_ctx.basic_attr.hw_version,
-                                              m_dev_ctx.basic_attr.mf_name,
-                                              m_dev_ctx.basic_attr.model_id,
-                                              m_dev_ctx.basic_attr.date_code,
-                                              &m_dev_ctx.basic_attr.power_source,
-                                              m_dev_ctx.basic_attr.location_id,
-                                              &m_dev_ctx.basic_attr.ph_env);
+ZB_ZCL_DECLARE_BASIC_ATTRIB_LIST_EXT(basic_attr_list,
+                                     &m_dev_ctx.basic_attr.zcl_version,
+                                     &m_dev_ctx.basic_attr.app_version,
+                                     &m_dev_ctx.basic_attr.stack_version,
+                                     &m_dev_ctx.basic_attr.hw_version,
+                                     m_dev_ctx.basic_attr.mf_name,
+                                     m_dev_ctx.basic_attr.model_id,
+                                     m_dev_ctx.basic_attr.date_code,
+                                     &m_dev_ctx.basic_attr.power_source,
+                                     m_dev_ctx.basic_attr.location_id,
+                                     &m_dev_ctx.basic_attr.ph_env,
+                                     m_dev_ctx.basic_attr.sw_ver);
 
-ZB_ZCL_DECLARE_ON_OFF_ATTRIB_LIST_TL(on_off_attr_list,
+ZB_ZCL_DECLARE_ON_OFF_ATTRIB_LIST_EXT(on_off_attr_list,
                                       &m_dev_ctx.on_off_attr.on_off,
                                       &m_dev_ctx.on_off_attr.global_scene_ctrl,
                                       &m_dev_ctx.on_off_attr.on_time,
@@ -530,7 +530,12 @@ static void scheduler_init(void)
  */
 static void level_control_set_value(zb_uint16_t new_level)
 {
-    m_dev_ctx.level_control_attr.current_level = new_level;
+    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT,                                       
+                         ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL,            
+                         ZB_ZCL_CLUSTER_SERVER_ROLE,                 
+                         ZB_ZCL_ATTR_LEVEL_CONTROL_CURRENT_LEVEL_ID, 
+                         (zb_uint8_t *)&new_level,                                       
+                         ZB_FALSE);                                  
 
     NRF_LOG_INFO("Set level value: %i", new_level);
 
@@ -545,11 +550,23 @@ static void level_control_set_value(zb_uint16_t new_level)
     /* According to the table 7.3 of Home Automation Profile Specification v 1.2 rev 29, chapter 7.1.3. */
     if (new_level == 0)
     {
-        m_dev_ctx.on_off_attr.on_off = ZB_FALSE;
+        zb_uint8_t value = ZB_FALSE;
+        ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
+                             ZB_ZCL_CLUSTER_ID_ON_OFF,    
+                             ZB_ZCL_CLUSTER_SERVER_ROLE,  
+                             ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
+                             &value,                        
+                             ZB_FALSE);                   
     }
     else
     {
-        m_dev_ctx.on_off_attr.on_off = ZB_TRUE;
+        zb_uint8_t value = ZB_TRUE;
+        ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
+                             ZB_ZCL_CLUSTER_ID_ON_OFF,    
+                             ZB_ZCL_CLUSTER_SERVER_ROLE,  
+                             ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
+                             &value,                        
+                             ZB_FALSE);
     }
 }
 
@@ -559,7 +576,12 @@ static void level_control_set_value(zb_uint16_t new_level)
  */
 static void on_off_set_value(zb_bool_t on)
 {
-    m_dev_ctx.on_off_attr.on_off = on;
+    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
+                         ZB_ZCL_CLUSTER_ID_ON_OFF,    
+                         ZB_ZCL_CLUSTER_SERVER_ROLE,  
+                         ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
+                         (zb_uint8_t *)&on,                        
+                         ZB_FALSE);
 
     NRF_LOG_INFO("Set ON/OFF value: %i", on);
 
@@ -614,8 +636,7 @@ static void bulb_clusters_attr_init(void)
     m_dev_ctx.basic_attr.ph_env = BULB_INIT_BASIC_PH_ENV;
 
     /* Identify cluster attributes data */
-    m_dev_ctx.identify_attr.identify_time    = ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE;
-    m_dev_ctx.identify_attr.commission_state = ZB_ZCL_ATTR_IDENTIFY_COMMISSION_STATE_HA_ID_DEF_VALUE;
+    m_dev_ctx.identify_attr.identify_time = ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE;
 
     /* On/Off cluster attributes data */
     m_dev_ctx.on_off_attr.on_off            = (zb_bool_t)ZB_ZCL_ON_OFF_IS_ON;
@@ -625,8 +646,20 @@ static void bulb_clusters_attr_init(void)
 
     m_dev_ctx.level_control_attr.current_level  = ZB_ZCL_LEVEL_CONTROL_LEVEL_MAX_VALUE;
     m_dev_ctx.level_control_attr.remaining_time = ZB_ZCL_LEVEL_CONTROL_REMAINING_TIME_DEFAULT_VALUE;
-    ZB_ZCL_LEVEL_CONTROL_SET_ON_OFF_VALUE(HA_DIMMABLE_LIGHT_ENDPOINT, m_dev_ctx.on_off_attr.on_off);
-    ZB_ZCL_LEVEL_CONTROL_SET_LEVEL_VALUE(HA_DIMMABLE_LIGHT_ENDPOINT, m_dev_ctx.level_control_attr.current_level);
+
+    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
+                         ZB_ZCL_CLUSTER_ID_ON_OFF,    
+                         ZB_ZCL_CLUSTER_SERVER_ROLE,  
+                         ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
+                         (zb_uint8_t *)&m_dev_ctx.on_off_attr.on_off,                        
+                         ZB_FALSE);                   
+
+    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT,                                       
+                         ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL,            
+                         ZB_ZCL_CLUSTER_SERVER_ROLE,                 
+                         ZB_ZCL_ATTR_LEVEL_CONTROL_CURRENT_LEVEL_ID, 
+                         (zb_uint8_t *)&m_dev_ctx.level_control_attr.current_level,                                       
+                         ZB_FALSE);                                  
 }
 
 /**@brief Callback function for handling ZCL commands.
@@ -713,7 +746,7 @@ static void zigbee_init(void)
     /* Set static long IEEE address. */
     zb_set_network_router_role(IEEE_CHANNEL_MASK);
     zb_set_max_children(0);
-    zb_set_nvram_erase_at_start(ERASE_PERSISTENT_CONFIG);
+    zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));
 
     /* Initialize application context structure. */

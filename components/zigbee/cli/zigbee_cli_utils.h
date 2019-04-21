@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -41,6 +41,7 @@
 #define ZIGBEE_CLI_UTILS_H__
 #include "nrf_cli.h"
 #include "zboss_api.h"
+#include "zigbee_helpers.h"
 
 /*@brief Macro which defines the Endpoint Handler section,
  *       which allows iterating over them.
@@ -82,6 +83,38 @@ static inline void print_error(nrf_cli_t const * p_cli, const char * p_message)
     }
 }
 
+/**@breif Print a list of items.
+ * 
+ * Individual items in the list are delimited by comma.
+ *
+ * @param p_cli a pointer to CLI instance
+ * @param hdr   the list header string
+ * @param fmt   a printf like format of an individual list item
+ * @param type  type of the list item
+ * @param size  the list size (in items)
+ */
+#define PRINT_LIST(p_cli, hdr, fmt, type, ptr, size)                 \
+{                                                                    \
+    /*lint -e662 */                                                  \
+    nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, hdr);                     \
+    for (type * p_item = (ptr); p_item < (ptr) + size - 1; p_item++) \
+    {                                                                \
+        nrf_cli_fprintf(p_cli,                                       \
+                        NRF_CLI_NORMAL,                              \
+                        fmt ",",                                     \
+                        *p_item);                                    \
+    }                                                                \
+                                                                     \
+    if (size > 0)                                                    \
+    {                                                                \
+        nrf_cli_fprintf(p_cli,                                       \
+                        NRF_CLI_NORMAL,                              \
+                        fmt " ",                                     \
+                        *((ptr) + size - 1));                        \
+    }                                                                \
+    /*lint -restore */                                               \
+} 
+
 /**@brief Parse the null-terminated string of hex characters into 64-bit or 16-bit address.
  *        Returns ZB_TRUE if the conversion was successful, otherwise ZB_FALSE.
  *
@@ -92,20 +125,13 @@ static inline void print_error(nrf_cli_t const * p_cli, const char * p_message)
  *
  * @return If the conversion was successful or not.
  */
-zb_bool_t parse_address_string(char * input, zb_addr_u * output, zb_uint8_t * addr_mode);
+zb_bool_t parse_address_string(const char * input, zb_addr_u * output, zb_uint8_t * addr_mode);
 
 /**@brief The callback which is to be called whenever an APS ACK comes to a
  *        frame being sent. The buffer which informs the user about the delivery
  *        is being freed.
  */
 zb_void_t frame_acked_cb(zb_uint8_t param);
-
-/**@brief Convert 64-bit address to hex string.
- *
- * @param p_cli 	Pointer to CLI instance.
- * @param p_addr 	Pointer to the address.
- */
-int ieee_addr_to_str(char * p_str_buf, uint16_t buf_len, zb_ieee_addr_t p_addr);
 
 /**@brief Convert ZCL attribute value to string.
  *
@@ -132,25 +158,41 @@ int zcl_attr_to_str(char * p_str_buf, uint16_t buf_len, zb_uint16_t attr_type, z
  */
 int sscan_uint8(const char * p_bp, uint8_t * p_u8);
 
-/**@brief Print 64bit address to hex string.
+/**@brief Print buffer as hex string.
  *
- * @param p_cli 	Pointer to CLI instance.
- * @param p_addr 	Pointer to the address.
+ * @param p_cli     Pointer to CLI instance.
+ * @param p_in      Pointer to data to be printed out.
+ * @param size      Data size in bytes
+ * @param reverse   If True then data is printed out in reverse order.
  */
-static inline void print_64(nrf_cli_t const * p_cli, zb_ieee_addr_t p_addr)
+static inline void print_hexdump(nrf_cli_t const * p_cli,
+                                 const uint8_t * p_in, uint8_t size,
+                                 bool reverse)
 {
-    char addr_buf[]   = "0001020304050607";
+    char addr_buf[2*size + 1];
     int bytes_written = 0;
 
-    bytes_written = ieee_addr_to_str(addr_buf, sizeof(addr_buf), p_addr);
+    memset(addr_buf, 0, sizeof(addr_buf));
+
+    bytes_written = to_hex_string(addr_buf, (uint16_t)sizeof(addr_buf), p_in, size, reverse);
     if (bytes_written < 0)
     {
-        nrf_cli_fprintf(p_cli, NRF_CLI_ERROR, "%s", "Unable to print IEEE address");
+        nrf_cli_fprintf(p_cli, NRF_CLI_ERROR, "%s", "Unable to print hexdump");
     }
     else
     {
         nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "%s", addr_buf);
     }
 }
+
+/**@brief Read array of uint8_t from hex string.
+ *
+ * @param p_in_str      Pointer to the input hex string.
+ * @param p_out_buff    Pointer to the output uint8_t array.
+ * @param limit         Limit of bytes to read.
+ *
+ * @return 1 on success, 0 otherwise.
+ */
+int parse_hex_str(char const * p_in_str, uint8_t * p_out_buff, uint8_t limit);
 
 #endif /* ZIGBEE_CLI_UTILS_H__ */

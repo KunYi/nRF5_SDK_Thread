@@ -45,6 +45,12 @@ SECTIONS
     KEEP(*(SORT(.crypto_data*)))
     PROVIDE(__stop_crypto_data = .);
   } > FLASH
+  .test_vector_aes_data :
+  {
+    PROVIDE(__start_test_vector_aes_data = .);
+    KEEP(*(SORT(.test_vector_aes_data*)))
+    PROVIDE(__stop_test_vector_aes_data = .);
+  } > FLASH
   .test_vector_aes_mac_data :
   {
     PROVIDE(__start_test_vector_aes_mac_data = .);
@@ -63,23 +69,17 @@ SECTIONS
     KEEP(*(SORT(.test_vector_aes_func_data*)))
     PROVIDE(__stop_test_vector_aes_func_data = .);
   } > FLASH
-  .test_vector_aes_data :
+  .test_vector_aead_simple_data :
   {
-    PROVIDE(__start_test_vector_aes_data = .);
-    KEEP(*(SORT(.test_vector_aes_data*)))
-    PROVIDE(__stop_test_vector_aes_data = .);
+    PROVIDE(__start_test_vector_aead_simple_data = .);
+    KEEP(*(SORT(.test_vector_aead_simple_data*)))
+    PROVIDE(__stop_test_vector_aead_simple_data = .);
   } > FLASH
   .test_vector_aead_data :
   {
     PROVIDE(__start_test_vector_aead_data = .);
     KEEP(*(SORT(.test_vector_aead_data*)))
     PROVIDE(__stop_test_vector_aead_data = .);
-  } > FLASH
-  .test_vector_aead_simple_data :
-  {
-    PROVIDE(__start_test_vector_aead_simple_data = .);
-    KEEP(*(SORT(.test_vector_aead_simple_data*)))
-    PROVIDE(__stop_test_vector_aead_simple_data = .);
   } > FLASH
   .test_vector_ecdh_data_random :
   {
@@ -111,17 +111,23 @@ SECTIONS
     KEEP(*(SORT(.test_vector_ecdsa_sign_data*)))
     PROVIDE(__stop_test_vector_ecdsa_sign_data = .);
   } > FLASH
-  .test_vector_eddsa_verify_data :
+  .test_vector_ecdsa_random_data :
   {
-    PROVIDE(__start_test_vector_eddsa_verify_data = .);
-    KEEP(*(SORT(.test_vector_eddsa_verify_data*)))
-    PROVIDE(__stop_test_vector_eddsa_verify_data = .);
+    PROVIDE(__start_test_vector_ecdsa_random_data = .);
+    KEEP(*(SORT(.test_vector_ecdsa_random_data*)))
+    PROVIDE(__stop_test_vector_ecdsa_random_data = .);
   } > FLASH
   .test_vector_eddsa_sign_data :
   {
     PROVIDE(__start_test_vector_eddsa_sign_data = .);
     KEEP(*(SORT(.test_vector_eddsa_sign_data*)))
     PROVIDE(__stop_test_vector_eddsa_sign_data = .);
+  } > FLASH
+  .test_vector_eddsa_verify_data :
+  {
+    PROVIDE(__start_test_vector_eddsa_verify_data = .);
+    KEEP(*(SORT(.test_vector_eddsa_verify_data*)))
+    PROVIDE(__stop_test_vector_eddsa_verify_data = .);
   } > FLASH
   .test_vector_hmac_data :
   {
@@ -135,17 +141,17 @@ SECTIONS
     KEEP(*(SORT(.test_vector_hkdf_data*)))
     PROVIDE(__stop_test_vector_hkdf_data = .);
   } > FLASH
-  .test_vector_hash_data :
-  {
-    PROVIDE(__start_test_vector_hash_data = .);
-    KEEP(*(SORT(.test_vector_hash_data*)))
-    PROVIDE(__stop_test_vector_hash_data = .);
-  } > FLASH
   .test_vector_hash_long_data :
   {
     PROVIDE(__start_test_vector_hash_long_data = .);
     KEEP(*(SORT(.test_vector_hash_long_data*)))
     PROVIDE(__stop_test_vector_hash_long_data = .);
+  } > FLASH
+  .test_vector_hash_data :
+  {
+    PROVIDE(__start_test_vector_hash_data = .);
+    KEEP(*(SORT(.test_vector_hash_data*)))
+    PROVIDE(__stop_test_vector_hash_data = .);
   } > FLASH
   .test_case_data :
   {
@@ -179,5 +185,6 @@ SECTIONS
   } > FLASH
 
 } INSERT AFTER .text
+
 
 INCLUDE "nrf_common.ld"

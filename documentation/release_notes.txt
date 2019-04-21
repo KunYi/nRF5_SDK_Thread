@@ -1,3 +1,206 @@
+nRF5 SDK for Thread and Zigbee v3.0.0
+-------------------------------------
+Release Date: Week 15, 2019
+
+This release is the production-ready release of the Thread features available on the nRF52840 chip.
+The nRF52840 running the OpenThread stack is Thread 1.1 Certified (https://www.threadgroup.org/What-is-Thread#certifiedproducts).
+
+This release is the production-ready release of the Zigbee features available on the nRF52840 chip.
+The nRF52840 running the Zigbee stack conforms to Zigbee PRO R21 + Green Power Proxy specifications.
+The Zigbee stack provided by the release has been successfully tested in Zigbee Alliance Authorized Test Laboratory
+and has received formal approval from Zigbee Alliance as a Zigbee Compliant Platform.
+The Nordic Zigbee software solution released as part of nRF5 SDK for Thread and Zigbee incorporates
+the Base Device Behavior specification and the latest of the ZCL specification (ver. 7).
+This enables to build, certify, and ship commercial Zigbee 3.0 Certified Products.
+
+Software components and application examples for MDK, peripherals, BLE, and NFC
+have been inherited from nRF5 SDK v15.3.0. No changes were made to the SDK v15.3.0 content.
+
+****** Multiprotocol limitations ******
+- Interrupts with IRQ priority 2 and 3 must not be used for multiprotocol examples.
+- Limitations of simultaneous operation of the SoftDevice frontend and the 802.15.4 frontend:
+	- Do not use the PPI channels reserved by the SoftDevice (17, 18, 19).
+	- The SoftDevice and the 802.15.4 driver must use separate sets of PPI channels, for example (1, 2) and (3, 4).
+	- The SoftDevice and the 802.15.4 driver must use separate sets of GPIOTE channels, for example 4 and (6, 7).
+- Due to a limitation of the SoftDevice, depending on the configured timeslot timeout of nRF IEEE 802.15.4 radio driver, BLE activity may cause 100% CPU utilization, or increase switching times. The details are presented in the official documentation in the Multiprotocol considerations section, available in Thread and Zigbee shared features > Multiprotocol support with BLE/Bluetooth > Dynamic multiprotocol.
+
+
+****** Thread ******
+
+The Thread examples in this SDK are built on top of the OpenThread stack: https://github.com/openthread/openthread.
+
+*** New features
+****************
+- Added support for nRF52811 chip (on nRF52811 DK and emulation on nRF52840 DK).
+- Added support for the new architecture - Radio Co-Processor (RCP or NCP-radio).
+- Added new example that presents communication with Google Cloud Platform using CoAP and CoAP Secure.
+- Introduced new nRF Sniffer for 802.15.4.
+- Added support for Simple Network Time Protocol (SNTP).
+- Exposed CoAP Secure (DTLS) client and server API.
+- Added support for hardware accelerated ECDSA.
+- Extended the Thread Benchmark application with new Bluetooth 5.0 features.
+- Introduced the IEEE 802.15.4 multiprotocol configuration module.
+- Added support for RCP architecture in Thread Border Router.
+
+*** Changes
+***********
+- Refactored thread_utils and thread_coap_utils modules.
+- SLAAC (Stateless Address Autoconfiguration) is no longer done by applications or OpenThread CLI application. This mechanism is now moved to OpenThread core.
+- Precompiled hex files are now delivered for all supported boards.
+- Updated the nordic_cdc_acm.inf installation file for USB driver to include nRF Sniffer for Thread and Zigbee CLI.
+- Removed the need to modify Topology config of Thread Harness v1.4.0, because https://threadgroup.atlassian.net/browse/TESTPLAN-380 has been fixed.
+- Refactored several OpenThread API calls, especially for CoAP.
+- Fixed stability issues in multiprotocol configuration.
+- Changed IPv6 address of the DNS64 server to fdaa:bb:1::2.
+
+*** Limitations
+***************
+- Thread initialization must be done outside of the FreeRTOS thread, that is before the FreeRTOS thread is created.
+
+*** Known issues
+****************
+- Nordic OpenThread Border Router occasionally fails to initialize the access point service. Currently, a reboot is required in such situations.
+- To use Ethernet connection on Nordic OpenThread Border Router, the Ethernet cable must be plugged in prior to boot.
+- Re-initialization of the OpenThread stack and platform can be done only for single PHY configuration. For multiprotocol configuration, the full reset of the MCU is needed.
+- DFU example in unicast mode occasionally fails to upgrade the firmware after the process is triggered from the client.
+- External commissioning example with the RCP connected to the Nordic OpenThread Border Router does not work. The current workaround is to use the NCP instead.
+
+*** Compatible tools
+********************
+- nrfutil-5.1.0 (available from https://github.com/NordicSemiconductor/pc-nrfutil)
+- nRF Thread Topology Monitor (nRF TTM) v0.12.0-1.alpha
+- RaspPi_OT_Border_Router_Demo_v3.0.0-1.alpha.img
+
+These tools are available from https://www.nordicsemi.com/thread#Downloads and https://www.nordicsemi.com/eng/Products/nRF-Thread-Topology-monitor#Downloads
+
+The following OpenThread commit has been used to generate pre-built Thread stack libraries, and for testing and verification:
+- https://github.com/openthread/openthread/commit/23ff1015d4f68b07c303ab35c9656f43642d2c1d
+
+The following nRF IEEE 802.15.4 radio driver has been included in pre-built Thread stack libraries, and used for testing
+and verification:
+- https://github.com/NordicSemiconductor/nRF-IEEE-802.15.4-radio-driver/commit/652a35c8718125ae7ef615df1155c5c412780b17
+
+The following wpantund and Border Router commits have been used as part of the
+Nordic OpenThread Border Router solution, and for testing and verification:
+- https://github.com/openthread/wpantund/commit/b8d70c2e5133b8fa20a9ea45ab3c24b5d4a42923
+- https://github.com/openthread/ot-br-posix/commit/633b37bc04bcd9bc61a78d3b68714cfe2fe9f624
+- https://github.com/openthread/openthread/commit/23ff1015d4f68b07c303ab35c9656f43642d2c1d
+
+The following wpantund and Border Router commits have been used as part of the
+nRF Sniffer for 802.15.4 solution, and for testing and verification:
+- https://github.com/NordicSemiconductor/nRF-Sniffer-for-802.15.4/commit/dff6c8d7170a034b09ce2ece361af77c72be4f37
+
+*** Certification
+*****************
+The OpenThread stack has been officially certified on nRF52840 as Thread Group Certified Component.
+
+The included stack was internally tested using Thread V1.1 Test Harness 1.4.0 R49.3 and the complete Thread Test Bed.
+
+The DUT device in the SoC architecture has been tested in the following combinations:
+- PCA10056 v1.0.0 - GCC libraries
+- PCA10056 v1.0.0 - IAR libraries
+
+The DUT device in the SoC architecture that was connected through Bluetooth Low Energy (multiprotocol) during all test cases has been tested in the following combinations:
+- PCA10056 v1.0.0 - GCC libraries
+
+
+All 158 out of 158 tests passed.
+
+The test Router_5_6_3 occasionally fails due to the incorrect test result. This problem is being processed
+by Thread Group: https://threadgroup.atlassian.net/browse/TSTBED-108
+
+*** Environment
+***************
+The following toolchains have been used for testing and verification of the examples:
+- GCC: GCC ARM Embedded 7.2018 q2 update
+- IAR: IAR Workbench 7.80.4
+- SES: SES 4.12
+- ARM: MDK-ARM version 5.25
+- J-Link: 6.42
+
+Supported SoftDevices for multiprotocol support:
+- S140 v6.1.1
+
+Supported boards:
+- PCA10056 (from version 1.0.0)
+- PCA10056e
+- PCA10059
+- PCA10068
+
+
+****** Zigbee ******
+
+This is a production-ready release of the Zigbee features available on the nRF52840 chip.
+
+*** New features
+****************
+- Multiprotocol Door Lock example, which demonstrates basic use of the Door Lock cluster.
+- Multi-sensor example, which demonstrates how to create a custom Zigbee cluster.
+- Multi-sensor FreeRTOS example, which demonstrates how to use the Zigbee stack with RTOS.
+- Zigbee CLI wrapper example and Python library.
+
+*** Changes
+***********
+- Updated Zigbee stack pre-built libraries.
+- Added support for Finding and Binding procedure to light control example.
+- Added support for WS2812 shield to light control example.
+- Extended BLE UART and Zigbee Light Switch Example to allow for controlling Color Control Cluster and multiple endpoints.
+- Updated Coordinator in Light Control example. It can now open network on the BSP_BUTTON_0 button press.
+- Extended Zigbee CLI Agent Router example with new commands.
+- Moved OTA client example from experimental to production.
+- Removed production config generator tool (replaced by nrfutil).
+
+*** Limitations
+***************
+- Dynamic Memory Config: Binding table entries number with unique source address, endpoint, and cluster ID is limited to 32.
+
+*** Known issues
+****************
+- Benchmark example: Degradation in Keil performance. CPU utilization is higher (2x), network throughput is lower (/2).
+- Multiprotocol: Match Descriptor Response message might not be propagated to the application layer.
+- ZB KERNEL: Zigbee performance might be affected by heavy flash operations. Zigbee stack subsystem periodically runs migration process. As flash operations block the CPU this may affect Zigbee time-critical processes (Association, Rejoin, Leave, GreenPower Commissioing etc.)
+                           if it occurs at the same time with such processes. The likelihood of this is low, but may occur if Parent device is joining 20+ devices one-by-one without delays, or in other cases of mass NVRAM operations in intersection with mass radio operations.
+                           This issue does not affect steady state operation.
+- OTA DFU: In case of MCU reset between completion of OTA image transfer and postponed firmware upgrade, the upgrade will be applied immediately.
+- OTA DFU: It is impossible to cancel OTA upgrade by sending Default Response with code ABORT in response to OTA Upgrade End Request sent by the client.
+- OTA DFU: OTA server does not respond with Default Response if Image Block Request for non-existing image is sent. Instead, it answers with Image Block Response with status ABORT (0x95).
+- OTA DFU: OTA client will not accept upgrade image unless Stack Release version is the same as in current image. 
+- OTA DFU: NVRAM APS binding table dataset format has been changed between SDK 2.0.0 and SDK 3.0.0. For a device that uses bindings, this means that if it will be updated from the SDK 2.0.0 or older to SDK 3.0.0 or newer, all bindings will be lost and a device will stop functioning.
+                         Moreover, it is unsafe to update a device in that case due to possible memory corruption. Reset to factory defaults and re-commissioning are needed. For a device that does not use bindings,
+                         it is safe to update from the to SDK 3.0.0 or newer.
+- ZCL: There is an issue with reading GLOBAL_CLUSTER_REVISION (0xfffd) attribute on the clusters that do not have list of attributes. Read Attributes Response command will
+                     contain UNSUPPORTED_ATTRIBUTE status for such type of clusters. Possible workaround: declare empty attribute list for this cluster and pass it into the cluster list
+                     declaration (instead of 0-NULL declaration):
+                     #define ZB_ZCL_DECLARE_EMPTY_ATTRIB_LIST(attr_list)  \  
+                             ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)  \
+                             ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
+
+*** Compatible tools
+********************
+- nrfutil-5.0.0 or newer (available from https://github.com/NordicSemiconductor/pc-nrfutil)
+
+The following nRF IEEE 802.15.4 radio driver has been included in the pre-built Zigbee stack libraries, and used for testing
+and verification: 652a35c8718125ae7ef615df1155c5c412780b17
+
+*** Environment
+***************
+The following toolchains have been used for testing and verification of the examples:
+- GCC: GCC ARM Embedded 7.2018 q2 update
+- IAR: IAR Workbench 7.80.4
+- SES: SES 4.12
+- ARM: MDK-ARM version 5.25
+- J-Link: 6.42
+
+Supported SoftDevices for multiprotocol support:
+- S140 v6.1.1
+
+Supported boards:
+- PCA10056 (from version 1.0.0)
+- PCA10059
+
+
+========================================================
+
 nRF5 SDK for Thread and Zigbee v2.0.0
 ---------------------------
 Release Date: Week 39, 2018
@@ -6,9 +209,9 @@ This release is the production-ready release of the Thread features available on
 The nRF52840 running the OpenThread stack is Thread 1.1 Certified (https://www.threadgroup.org/What-is-Thread#certifiedproducts).
 
 This release is the production-ready release of the Zigbee features available on the nRF52840 chip.
-The nRF52840 running the Zigbee stack conforms to Zigbee PRO R21 + Green Power Proxy specifications. The Zigbee stack provided by the release has been succesfully tested in Zigbee Alliance Authorized Test Laboratory and is pending formal approval from Zigbee Alliance as a Zigbee Compliant Platform. 
-The Nordic Zigbee software solution released as part of nRF5 SDK for Thread and Zigbee incorporates the Base Device Behavior 
-specification and the latest of the ZCL specification (ver. 7). This enables to build, certify, and ship commercial Zigbee 3.0 Certified Products. 
+The nRF52840 running the Zigbee stack conforms to Zigbee PRO R21 + Green Power Proxy specifications. The Zigbee stack provided by the release has been successfully tested in Zigbee Alliance Authorized Test Laboratory and has received formal approval from Zigbee Alliance as a Zigbee Compliant Platform.
+The Nordic Zigbee software solution released as part of nRF5 SDK for Thread and Zigbee incorporates the Base Device Behavior
+specification and the latest of the ZCL specification (ver. 7). This enables to build, certify, and ship commercial Zigbee 3.0 Certified Products.
 
 Software components and application examples for MDK, peripherals, BLE, and NFC
 have been inherited from nRF5 SDK v15.2.0. Minor changes to the SDK v15.2.0 are
@@ -135,7 +338,7 @@ This release is the first production-ready release of the Zigbee features availa
 *** New features
 *****************
 - Pre-built Zigbee 3.0 certified (pending formal aproval) stack provided as a library.
-- Support for Keil and SES compilers. 
+- Support for Keil and SES compilers.
 - Support for Zigbee Sleepy End Device role and a light switch example presenting the role.
 - Support for Zigbee 3.0 Green Power Proxy feature.
 - Support for dynamic memory configuration of the stack.

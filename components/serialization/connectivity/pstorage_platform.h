@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2013 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -63,7 +63,7 @@ static __INLINE uint16_t pstorage_flash_page_size()
 
 static __INLINE uint32_t pstorage_flash_page_end()
 {
-   uint32_t bootloader_addr = NRF_UICR->NRFFW[0];
+   uint32_t bootloader_addr = BOOTLOADER_ADDRESS;
 
    return ((bootloader_addr != PSTORAGE_FLASH_EMPTY_MASK) ?
            (bootloader_addr/ PSTORAGE_FLASH_PAGE_SIZE) : NRF_FICR->CODESIZE);

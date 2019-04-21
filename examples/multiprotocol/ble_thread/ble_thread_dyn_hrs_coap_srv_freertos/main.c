@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -185,16 +185,16 @@ static TaskHandle_t m_logger_thread;                                /**< Definit
 
 typedef struct
 {
-    TaskHandle_t     thread_stack_task;     /**< Thread stack task handle */
-    TaskHandle_t     led1_task;             /**< LED1 task handle*/
-    TaskHandle_t     led2_task;             /**< LED2 task handle*/
+    TaskHandle_t thread_stack_task;  /**< Thread stack task handle */
+    TaskHandle_t led1_task;          /**< LED1 task handle*/
+    TaskHandle_t led2_task;          /**< LED2 task handle*/
 } application_t;
 
 static application_t m_app =
 {
-    .thread_stack_task     = NULL,
-    .led1_task             = NULL,
-    .led2_task             = NULL,
+    .thread_stack_task = NULL,
+    .led1_task         = NULL,
+    .led2_task         = NULL,
 };
 
 static void advertising_start(void * p_erase_bonds);
@@ -543,7 +543,7 @@ static void bsp_event_handler(bsp_event_t event)
             break;
 
         case BSP_EVENT_KEY_3:
-            thread_coap_utils_provisioning_enable(true);
+            thread_coap_utils_provisioning_enable_set(true);
             break;
 
         default:
@@ -573,6 +573,7 @@ static inline void light_on(void)
     vTaskResume(m_app.led2_task);
 }
 
+
 static inline void light_off(void)
 {
     vTaskSuspend(m_app.led1_task);
@@ -581,6 +582,7 @@ static inline void light_off(void)
     vTaskSuspend(m_app.led2_task);
     LEDS_OFF(BSP_LED_3_MASK);
 }
+
 
 static inline void light_toggle(void)
 {
@@ -594,20 +596,25 @@ static inline void light_toggle(void)
     }
 }
 
-static void light_changed(thread_coap_utils_light_command_t light_state)
+
+static void on_light_change(thread_coap_utils_light_command_t command)
 {
-    switch (light_state)
+    switch (command)
     {
-        case LIGHT_ON:
+        case THREAD_COAP_UTILS_LIGHT_CMD_ON:
             light_on();
             break;
 
-        case LIGHT_OFF:
+        case THREAD_COAP_UTILS_LIGHT_CMD_OFF:
             light_off();
             break;
 
-        case LIGHT_TOGGLE:
+        case THREAD_COAP_UTILS_LIGHT_CMD_TOGGLE:
             light_toggle();
+            break;
+
+        default:
+            ASSERT(false);
             break;
     }
 }
@@ -618,16 +625,26 @@ static void light_changed(thread_coap_utils_light_command_t light_state)
 
 void otTaskletsSignalPending(otInstance * p_instance)
 {
-    BaseType_t var = xTaskNotifyGive(m_app.thread_stack_task);
-    UNUSED_VARIABLE(var);
+    if (m_app.thread_stack_task == NULL)
+    {
+        return;
+    }
+
+    UNUSED_RETURN_VALUE(xTaskNotifyGive(m_app.thread_stack_task));
 }
+
 
 void otSysEventSignalPending(void)
 {
     static BaseType_t xHigherPriorityTaskWoken;
 
+    if (m_app.thread_stack_task == NULL)
+    {
+        return;
+    }
+
     vTaskNotifyGiveFromISR(m_app.thread_stack_task, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 /***************************************************************************************************
@@ -648,7 +665,7 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
             case OT_DEVICE_ROLE_DISABLED:
             case OT_DEVICE_ROLE_DETACHED:
             default:
-                thread_coap_utils_provisioning_enable(false);
+                thread_coap_utils_provisioning_enable_set(false);
                 break;
         }
     }
@@ -992,11 +1009,12 @@ static void buttons_leds_init(bool * p_erase_bonds)
  */
 static void thread_instance_init(void)
 {
-    thread_configuration_t  thread_configuration =
+    thread_configuration_t thread_configuration =
     {
-        .role              = RX_ON_WHEN_IDLE,
+        .radio_mode        = THREAD_RADIO_MODE_RX_ON_WHEN_IDLE,
         .autocommissioning = true,
     };
+
     thread_init(&thread_configuration);
     thread_cli_init();
     thread_state_changed_callback_set(thread_state_changed_callback);
@@ -1007,11 +1025,10 @@ static void thread_instance_init(void)
  */
 static void thread_coap_init(void)
 {
-    thread_coap_configuration_t thread_coap_configuration =
+    thread_coap_utils_configuration_t thread_coap_configuration =
     {
         .coap_server_enabled               = true,
         .coap_client_enabled               = false,
-        .coap_cloud_enabled                = false,
         .configurable_led_blinking_enabled = true,
     };
 
@@ -1025,7 +1042,7 @@ static void thread_stack_task(void * arg)
     while (1)
     {
         thread_process();
-        UNUSED_VARIABLE(ulTaskNotifyTake(pdTRUE, portMAX_DELAY));
+        UNUSED_RETURN_VALUE(ulTaskNotifyTake(pdTRUE, portMAX_DELAY));
     }
 }
 
@@ -1038,7 +1055,7 @@ static void led1_task(void * arg)
 {
     UNUSED_PARAMETER(arg);
 
-    while(1)
+    while (1)
     {
         LEDS_INVERT(BSP_LED_2_MASK);
         vTaskDelay(LED1_BLINK_INTERVAL);
@@ -1049,7 +1066,7 @@ static void led2_task(void * arg)
 {
     UNUSED_PARAMETER(arg);
 
-    while(1)
+    while (1)
     {
         LEDS_INVERT(BSP_LED_3_MASK);
         vTaskDelay(LED2_BLINK_INTERVAL);
@@ -1095,7 +1112,7 @@ static void logger_thread(void * arg)
         vTaskSuspend(NULL); // Suspend myself
     }
 }
-#endif //NRF_LOG_ENABLED
+#endif // NRF_LOG_ENABLED
 
 /**@brief A function which is hooked to idle task.
  * @note Idle hook must be enabled in FreeRTOS configuration (configUSE_IDLE_HOOK).
@@ -1103,7 +1120,10 @@ static void logger_thread(void * arg)
 void vApplicationIdleHook( void )
 {
 #if NRF_LOG_ENABLED
-     vTaskResume(m_logger_thread);
+    if (m_logger_thread)
+    {
+        vTaskResume(m_logger_thread);
+    }
 #endif
 }
 
@@ -1129,10 +1149,9 @@ int main(void)
     // Do not start any interrupt that uses system functions before system initialisation.
     // The best solution is to start the OS before any other initalisation.
 
-
 #if NRF_LOG_ENABLED
     // Start execution.
-    if (pdPASS != xTaskCreate(logger_thread, "LOGGER", 256, NULL, 1, &m_logger_thread))
+    if (pdPASS != xTaskCreate(logger_thread, "LOGGER", LOG_TASK_STACK_SIZE, NULL, 1, &m_logger_thread))
     {
         APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
     }
@@ -1169,12 +1188,10 @@ int main(void)
     // The task will run advertising_start() before entering its loop.
     nrf_sdh_freertos_init(advertising_start, &erase_bonds);
 
-    // Initialize OpenThread
-    thread_coap_utils_led_timer_init();
-    thread_coap_utils_provisioning_timer_init();
+    // Initialize Thread stack
     thread_instance_init();
     thread_coap_init();
-    thread_coap_utils_light_changed_callback_set(light_changed);
+    thread_coap_utils_light_command_handler_set(on_light_change);
 
     // Start thread stack execution.
     if (pdPASS != xTaskCreate(thread_stack_task, "THR", THREAD_STACK_TASK_STACK_SIZE, NULL, 1, &m_app.thread_stack_task))

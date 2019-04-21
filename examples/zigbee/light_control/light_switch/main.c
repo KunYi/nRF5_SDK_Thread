@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -48,6 +48,7 @@
 #include "zboss_api.h"
 #include "zb_mem_config_min.h"
 #include "zb_error_handler.h"
+#include "zigbee_helpers.h"
 
 #include "app_timer.h"
 #include "bsp.h"
@@ -499,7 +500,6 @@ static zb_void_t sleepy_device_setup(void)
 void zboss_signal_handler(zb_uint8_t param)
 {
     zb_zdo_app_signal_hdr_t      * p_sg_p         = NULL;
-    zb_zdo_signal_leave_params_t * p_leave_params = NULL;
     zb_zdo_app_signal_type_t       sig            = zb_get_app_signal(param, &p_sg_p);
     zb_ret_t                       status         = ZB_GET_APP_SIGNAL_STATUS(param);
     zb_ret_t                       zb_err_code;
@@ -536,7 +536,8 @@ void zboss_signal_handler(zb_uint8_t param)
             if (status == RET_OK)
             {
                 bsp_board_led_off(ZIGBEE_NETWORK_STATE_LED);
-                p_leave_params = ZB_ZDO_SIGNAL_GET_PARAMS(p_sg_p, zb_zdo_signal_leave_params_t);
+
+                zb_zdo_signal_leave_params_t * p_leave_params = ZB_ZDO_SIGNAL_GET_PARAMS(p_sg_p, zb_zdo_signal_leave_params_t);
                 NRF_LOG_INFO("Network left. Leave type: %d", p_leave_params->leave_type);
                 light_switch_retry_join(p_leave_params->leave_type);
             }
@@ -597,7 +598,7 @@ int main(void)
     zb_set_long_address(ieee_addr);
 
     zb_set_network_ed_role(IEEE_CHANNEL_MASK);
-    zb_set_nvram_erase_at_start(ERASE_PERSISTENT_CONFIG);
+    zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
 
     zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));

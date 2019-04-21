@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -60,13 +60,13 @@ typedef struct
     zb_uint8_t power_source;
     zb_char_t  location_id[15];
     zb_uint8_t ph_env;
+    zb_char_t  sw_ver[17];
 } zb_dev_basic_attr_t;
 
 /* Identify cluster attributes according to ZCL Spec 3.5.2.2 */
 typedef struct
 {
     zb_uint16_t identify_time;
-    zb_uint8_t  commission_state;
 } zb_dev_identify_attr_t;
 
 /* ON/Off cluster attributes according to ZCL Spec 3.8.2.2 */

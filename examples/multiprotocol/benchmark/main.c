@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -274,12 +274,13 @@ int main(void)
     APP_ERROR_CHECK(err_code);
 
     ble_stack_init();
-    cli_init();
+    ble_ping_init();
 
     // Initialize the protocol stack.
     protocol_init();
     benchmark_init();
 
+    cli_init();
     cli_remote_init();
 
     // Start interpreting CLI commands.

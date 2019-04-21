@@ -6,7 +6,7 @@ GROUP(-lgcc -lc -lnosys)
 MEMORY
 {
   FLASH (rx) : ORIGIN = 0x26000, LENGTH = 0x5a000
-  RAM (rwx) :  ORIGIN = 0x2000b8a8, LENGTH = 0x4758
+  RAM (rwx) :  ORIGIN = 0x2000a8a8, LENGTH = 0x5758
 }
 
 SECTIONS
@@ -95,5 +95,6 @@ SECTIONS
   } > FLASH
 
 } INSERT AFTER .text
+
 
 INCLUDE "nrf_common.ld"

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -72,7 +72,6 @@
 #define SLEEP_DURATION           10                                         /**< MQTT-SN duration field in a DISCONNECT message. */
 #define LED_ON_REQUEST           1                                          /**< LED ON command. */
 #define LED_OFF_REQUEST          0                                          /**< LED OFF command. */
-#define NUM_SLAAC_ADDRESSES      4                                          /**< Number of SLAAC addresses. */
 #define SEARCH_GATEWAY_TIMEOUT   5                                          /**< MQTT-SN Gateway discovery procedure timeout in [s]. */                                   
 
 static mqttsn_client_t      m_client;                                       /**< An MQTT-SN client instance. */
@@ -89,8 +88,6 @@ static mqttsn_topic_t       m_topic            =                            /**<
     .p_topic_name = (unsigned char *)m_topic_name,
     .topic_id     = 0,
 };
-
-static otNetifAddress m_slaac_addresses[NUM_SLAAC_ADDRESSES];               /**< Buffer containing addresses resolved by SLAAC */
 
 static void subscribe(void);
 
@@ -122,7 +119,10 @@ static void light_off(void)
  */
 static void sleep(void)
 {
-   otLinkSetPollPeriod(thread_ot_instance_get(), DEFAULT_POLL_PERIOD);
+    otError error;
+
+    error = otLinkSetPollPeriod(thread_ot_instance_get(), DEFAULT_POLL_PERIOD);
+    ASSERT(error == OT_ERROR_NONE);
 }
 
 /**@brief Puts MQTT-SN client in active mode.
@@ -131,7 +131,10 @@ static void sleep(void)
  */
 static void wake_up(void)
 {
-   otLinkSetPollPeriod(thread_ot_instance_get(), SHORT_POLL_PERIOD);
+    otError error;
+
+    error = otLinkSetPollPeriod(thread_ot_instance_get(), SHORT_POLL_PERIOD);
+    ASSERT(error == OT_ERROR_NONE);
 }
 
 /**@brief Toggles BSP_LED_2 based on received LED command. */
@@ -369,20 +372,6 @@ static void state_changed_callback(uint32_t flags, void * p_context)
 {
     NRF_LOG_INFO("State changed! Flags: 0x%08x Current role: %d\r\n",
                  flags, otThreadGetDeviceRole(p_context));
-
-    if (flags & OT_CHANGED_THREAD_NETDATA)
-    {
-        /**
-         * Whenever Thread Network Data is changed, it is necessary to check if generation of global
-         * addresses is needed. This operation is performed internally by the OpenThread CLI module.
-         * To lower power consumption, the examples that implement Thread Sleepy End Device role
-         * don't use the OpenThread CLI module. Therefore otIp6SlaacUpdate util is used to create
-         * IPv6 addresses.
-         */
-        otIp6SlaacUpdate(thread_ot_instance_get(), m_slaac_addresses,
-                         sizeof(m_slaac_addresses) / sizeof(m_slaac_addresses[0]),
-                         otIp6CreateRandomIid, NULL);
-    }
 }
 
 /***************************************************************************************************
@@ -542,7 +531,7 @@ static void thread_instance_init(void)
 {
     thread_configuration_t thread_configuration =
     {
-        .role                  = RX_OFF_WHEN_IDLE,
+        .radio_mode            = THREAD_RADIO_MODE_RX_OFF_WHEN_IDLE,
         .autocommissioning     = true,
         .poll_period           = DEFAULT_POLL_PERIOD,
         .default_child_timeout = DEFAULT_CHILD_TIMEOUT,

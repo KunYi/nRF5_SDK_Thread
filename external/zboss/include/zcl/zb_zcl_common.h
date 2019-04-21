@@ -282,6 +282,7 @@ typedef enum zb_zcl_status_e
   ZB_ZCL_STATUS_NOT_FOUND                = 0x8b, /*!< Not found */
   ZB_ZCL_STATUS_UNREPORTABLE_ATTRIB      = 0x8c, /*!< Unreportable attribute */
   ZB_ZCL_STATUS_INVALID_TYPE             = 0x8d, /*!< Invalid type */
+  ZB_ZCL_STATUS_WRITE_ONLY               = 0x8f, /*!< Write only */
   ZB_ZCL_STATUS_INCONSISTENT             = 0x92, /*!< Supplied values are inconsistent */
   ZB_ZCL_STATUS_ACTION_DENIED            = 0x93, /*!< The credentials presented by the device sending the
                                                        command are not sufficient to perform this action. */
@@ -299,6 +300,11 @@ typedef enum zb_zcl_status_e
   ZB_ZCL_STATUS_CALIB_ERR                = 0xc2, /*!< Calibration error */
   ZB_ZCL_STATUS_UNSUP_CLUST              = 0xc3, /*!< Cluster is not found on the target endpoint */
 } zb_zcl_status_t;
+
+/** @brief ZCL global attibute: cluster version returned by default. 
+    Used if the GLOBAL_CLUSTER_REVISION attribute is undefined for the cluster/role.
+*/
+#define ZB_ZCL_GLOBAL_CLUSTER_VERSION_DEFAULT 1
 
 #if defined ZB_ENABLE_HA
 
@@ -331,11 +337,10 @@ typedef void (*zb_zcl_modify_attr_value_cb_t)(
 /*! @defgroup zb_zcl_common_attrs General attributes' description
     Types and macros shared among all attributes' definitions.
     @{
-        @par Example
-        Use ZB_ZCL_SET_ATTRIBUTE
-        @snippet scenes_dut_563.c ZB_ZCL_SET_ATTRIBUTE
-        @par
-
+    @par Example
+    Use ZB_ZCL_SET_ATTRIBUTE
+    @snippet scenes_dut_563.c ZB_ZCL_SET_ATTRIBUTE
+    @par
     For more information see 5.6.3_scenes and other HA samples
 */
 
@@ -469,7 +474,7 @@ typedef enum zb_zcl_attr_type_e
   ZB_ZCL_ATTR_TYPE_S64            = 0x2f, /*!< Signed 64-bit value data type */
   ZB_ZCL_ATTR_TYPE_8BIT_ENUM      = 0x30, /*!< 8-bit enumeration (U8 discrete) data type */
   ZB_ZCL_ATTR_TYPE_16BIT_ENUM     = 0x31, /*!< 16-bit enumeration (U16 discrete) data type */
-  ZB_ZCL_ATTR_TYPE_BYTE_ARRAY     = 0x41, /*!< Byte array == octet string data type, */
+  ZB_ZCL_ATTR_TYPE_OCTET_STRING   = 0x41, /*!< Octet string data type, */
   ZB_ZCL_ATTR_TYPE_CHAR_STRING    = 0x42, /*!< Charactery string (array) data type */
   ZB_ZCL_ATTR_TYPE_LONG_OCTET_STRING = 0x43, /*!< Long octet string */
   ZB_ZCL_ATTR_TYPE_LONG_CHAR_STRING  = 0x44, /*!< Long character string */
@@ -487,14 +492,16 @@ typedef enum zb_zcl_attr_type_e
 /*! @brief ZCL attribute access values */
 typedef enum zb_zcl_attr_access_e
 {
-  ZB_ZCL_ATTR_ACCESS_READ_ONLY    = 0x00, /*!< Attribute is read only */
-  ZB_ZCL_ATTR_ACCESS_READ_WRITE   = 0x01, /*!< Attribute is read/write */
-  ZB_ZCL_ATTR_ACCESS_REPORTING    = 0x02, /*!< Attribute is allowed for reporting */
-  ZB_ZCL_ATTR_ACCESS_WRITE_OPTIONAL = 0x04, /*!< Attribute is read/write */
-  ZB_ZCL_ATTR_ACCESS_SINGLETON    = 0x08, /*!< Attribute is singleton */
-  ZB_ZCL_ATTR_ACCESS_SCENE        = 0x10, /*!< Attribute is accessed through scene */
+  ZB_ZCL_ATTR_ACCESS_READ_ONLY      = 0x01,
+  ZB_ZCL_ATTR_ACCESS_WRITE_ONLY     = 0x02,  /*!< Attribute is read/write */
+  ZB_ZCL_ATTR_ACCESS_READ_WRITE     = ZB_ZCL_ATTR_ACCESS_READ_ONLY | ZB_ZCL_ATTR_ACCESS_WRITE_ONLY,  /*!< Attribute is read/write */
+  ZB_ZCL_ATTR_ACCESS_REPORTING      = 0x04,  /*!< Attribute is allowed for reporting */
+  ZB_ZCL_ATTR_ACCESS_WRITE_OPTIONAL = ZB_ZCL_ATTR_ACCESS_READ_ONLY,  /*!< Attribute is read/write */
+  ZB_ZCL_ATTR_ACCESS_SINGLETON      = 0x08,  /*!< Attribute is singleton */
+  ZB_ZCL_ATTR_ACCESS_SCENE          = 0x10,  /*!< Attribute is accessed through scene */
   /* Use free bit in access attribute field to save RAM */
-  ZB_ZCL_ATTR_MANUF_SPEC          = 0x20, /*!< Attribute is manufacturer specific */
+  ZB_ZCL_ATTR_MANUF_SPEC            = 0x20,  /*!< Attribute is manufacturer specific */
+  ZB_ZCL_ATTR_ACCESS_INTERNAL       = 0x40,  /*!< ZBOSS Internal accsess only Attribute */
 } zb_zcl_attr_access_t;
 
 #define ZB_ZCL_ATTR_SET_WITH_ATTR_ID(_set, _id) ((_set << 8) | (_id & 0xFF))
@@ -510,7 +517,7 @@ typedef enum zb_zcl_attr_access_e
 {                                                            \
   if (attr_desc->access & ZB_ZCL_ATTR_ACCESS_WRITE_OPTIONAL) \
   {                                                          \
-    attr_desc->access |= ZB_ZCL_ATTR_ACCESS_READ_WRITE;      \
+    attr_desc->access |= ZB_ZCL_ATTR_ACCESS_WRITE_ONLY;      \
   }                                                          \
 }
 
@@ -1614,13 +1621,13 @@ zb_uint48_t zb_zcl_attr_get48(zb_uint8_t *value);
 #define ZB_ZCL_ARRAY_SIZE(ar, type) (sizeof(ar)/sizeof(type))
 
 /** @internal @brief Calculates byte array size (add 2 bytes for full length). */
-#define ZB_BYTE_ARRAY_GET_SIZE(ar, val) ZB_LETOH16(ar, val)
-#define ZB_BYTE_ARRAY_SET_SIZE(ar, val) ZB_HTOLE16_VAL(ar, val)
+#define ZB_ZCL_ARRAY_GET_SIZE(ar, val) ZB_LETOH16(ar, val)
+#define ZB_ZCL_ARRAY_SET_SIZE(ar, val) ZB_HTOLE16_VAL(ar, val)
 
 /** @internal @brief Calculates 32-byte array size (add 2 bytes for full length). */
 /* [EE] 04/09/2015 CR:MAJOR never cast byte* to int* */
-#define ZB_BYTE_32ARRAY_GET_SIZE(ar, val) { ZB_BYTE_ARRAY_GET_SIZE(ar, val); *(zb_uint16_t*)(ar) *= 4; }
-#define ZB_BYTE_32ARRAY_SET_SIZE(ar, val) { ZB_BYTE_ARRAY_SET_SIZE(ar, val); *(zb_uint16_t*)(ar) /= 4; }
+#define ZB_BYTE_32ARRAY_GET_SIZE(ar, val) { ZB_ZCL_ARRAY_GET_SIZE(ar, val); *(zb_uint16_t*)(ar) *= 4; }
+#define ZB_BYTE_32ARRAY_SET_SIZE(ar, val) { ZB_ZCL_ARRAY_SET_SIZE(ar, val); *(zb_uint16_t*)(ar) /= 4; }
 
 #define ZB_ZCL_NULL_EP_ID (zb_uint8_t)(-1)
 #define ZB_ZCL_NULL_ID (zb_uint16_t)(-1)
@@ -1982,7 +1989,7 @@ typedef struct zb_zcl_set_attr_value_param_s
                                                                                \
     switch ((zb_zcl_attr_type_t)(attrDesc)->type)                              \
     {                                                                          \
-      case ZB_ZCL_ATTR_TYPE_BYTE_ARRAY:                                        \
+      case ZB_ZCL_ATTR_TYPE_OCTET_STRING:                                      \
       case ZB_ZCL_ATTR_TYPE_CHAR_STRING:                                       \
       {                                                                        \
         zb_uint8_t *ptr =                                                      \
@@ -2034,7 +2041,7 @@ typedef struct zb_zcl_set_attr_value_param_s
                                                                                \
     switch ((zb_zcl_attr_type_t)(attrDesc)->type)                              \
     {                                                                          \
-      case ZB_ZCL_ATTR_TYPE_BYTE_ARRAY:                                        \
+      case ZB_ZCL_ATTR_TYPE_OCTET_STRING:                                      \
       case ZB_ZCL_ATTR_TYPE_CHAR_STRING:                                       \
       {                                                                        \
         zb_uint8_t *ptr =                                                      \

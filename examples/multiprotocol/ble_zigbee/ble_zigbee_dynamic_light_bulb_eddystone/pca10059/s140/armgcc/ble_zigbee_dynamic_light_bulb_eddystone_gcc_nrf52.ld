@@ -6,7 +6,7 @@ GROUP(-lgcc -lc -lnosys)
 MEMORY
 {
   FLASH (rx) : ORIGIN = 0x26000, LENGTH = 0xda000
-  RAM (rwx) :  ORIGIN = 0x20002a98, LENGTH = 0x3d568
+  RAM (rwx) :  ORIGIN = 0x20002c08, LENGTH = 0x3d3f8
 }
 
 SECTIONS
@@ -69,6 +69,12 @@ SECTIONS
     KEEP(*(.nrf_queue))
     PROVIDE(__stop_nrf_queue = .);
   } > FLASH
+  .pwr_mgmt_data :
+  {
+    PROVIDE(__start_pwr_mgmt_data = .);
+    KEEP(*(SORT(.pwr_mgmt_data*)))
+    PROVIDE(__stop_pwr_mgmt_data = .);
+  } > FLASH
   .sdh_stack_observers :
   {
     PROVIDE(__start_sdh_stack_observers = .);
@@ -105,12 +111,6 @@ SECTIONS
     KEEP(*(SORT(.crypto_data*)))
     PROVIDE(__stop_crypto_data = .);
   } > FLASH
-  .pwr_mgmt_data :
-  {
-    PROVIDE(__start_pwr_mgmt_data = .);
-    KEEP(*(SORT(.pwr_mgmt_data*)))
-    PROVIDE(__stop_pwr_mgmt_data = .);
-  } > FLASH
   .log_const_data :
   {
     PROVIDE(__start_log_const_data = .);
@@ -125,5 +125,6 @@ SECTIONS
   } > FLASH
 
 } INSERT AFTER .text
+
 
 INCLUDE "nrf_common.ld"

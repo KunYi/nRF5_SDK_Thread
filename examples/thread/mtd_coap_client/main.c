@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -64,12 +64,12 @@
 #include <openthread/thread.h>
 
 #define COAP_POLL_PERIOD         500
-#define NUM_SLAAC_ADDRESSES      4                                          /**< Number of SLAAC addresses. */
 
-#define SCHED_QUEUE_SIZE         32                                         /**< Maximum number of events in the scheduler queue. */
-#define SCHED_EVENT_DATA_SIZE    APP_TIMER_SCHED_EVENT_DATA_SIZE            /**< Maximum app_scheduler event size. */
+#define SCHED_QUEUE_SIZE         32                                                   /**< Maximum number of events in the scheduler queue. */
+#define SCHED_EVENT_DATA_SIZE    APP_TIMER_SCHED_EVENT_DATA_SIZE                      /**< Maximum app_scheduler event size. */
 
-static otNetifAddress m_slaac_addresses[NUM_SLAAC_ADDRESSES];               /**< Buffer containing addresses resolved by SLAAC */
+static thread_coap_utils_light_command_t m_command = THREAD_COAP_UTILS_LIGHT_CMD_OFF; /**< This variable stores command that has been most recently used. */
+
 
 /***************************************************************************************************
  * @section Buttons
@@ -77,35 +77,27 @@ static otNetifAddress m_slaac_addresses[NUM_SLAAC_ADDRESSES];               /**<
 
 static void bsp_event_handler(bsp_event_t event)
 {
+    otInstance * p_instance = thread_ot_instance_get();
+
     switch (event)
     {
         case BSP_EVENT_KEY_0:
-            thread_coap_utils_unicast_light_request_send(thread_ot_instance_get(), LIGHT_TOGGLE);
+            thread_coap_utils_unicast_light_request_send(THREAD_COAP_UTILS_LIGHT_CMD_TOGGLE);
             break;
 
         case BSP_EVENT_KEY_1:
         {
-            uint8_t command;
-            thread_coap_utils_mcast_light_on_toggle();
+            m_command = ((m_command == THREAD_COAP_UTILS_LIGHT_CMD_OFF) ? THREAD_COAP_UTILS_LIGHT_CMD_ON :
+                                                                          THREAD_COAP_UTILS_LIGHT_CMD_OFF);
 
-            if (thread_coap_utils_mcast_light_on_get())
-            {
-                command = LIGHT_ON;
-            }
-            else
-            {
-                command = LIGHT_OFF;
-            }
-
-            thread_coap_utils_multicast_light_request_send(thread_ot_instance_get(),
-                                                           command,
+            thread_coap_utils_multicast_light_request_send(m_command,
                                                            THREAD_COAP_UTILS_MULTICAST_REALM_LOCAL);
             break;
         }
 
         case BSP_EVENT_KEY_2:
             {
-                otLinkModeConfig mode = otThreadGetLinkMode(thread_ot_instance_get());
+                otLinkModeConfig mode = otThreadGetLinkMode(p_instance);
 
                 if (mode.mRxOnWhenIdle)
                 {
@@ -117,13 +109,13 @@ static void bsp_event_handler(bsp_event_t event)
                     mode.mRxOnWhenIdle = true;
                     LEDS_ON(BSP_LED_2_MASK);
                 }
-                otError error = otThreadSetLinkMode(thread_ot_instance_get(), mode);
+                otError error = otThreadSetLinkMode(p_instance, mode);
                 ASSERT(error == OT_ERROR_NONE);
             }
             break;
 
         case BSP_EVENT_KEY_3:
-            thread_coap_utils_provisioning_request_send(thread_ot_instance_get());
+            thread_coap_utils_provisioning_request_send();
             break;
 
         default:
@@ -139,7 +131,7 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
 {
     if (flags & OT_CHANGED_THREAD_ROLE)
     {
-        switch(otThreadGetDeviceRole(p_context))
+        switch (otThreadGetDeviceRole(p_context))
         {
             case OT_DEVICE_ROLE_CHILD:
             case OT_DEVICE_ROLE_ROUTER:
@@ -149,28 +141,9 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
             case OT_DEVICE_ROLE_DISABLED:
             case OT_DEVICE_ROLE_DETACHED:
             default:
-            thread_coap_utils_peer_addr_clear();
+                thread_coap_utils_peer_addr_clear();
                 break;
         }
-    }
-
-    if (flags & OT_CHANGED_THREAD_PARTITION_ID)
-    {
-        thread_coap_utils_peer_addr_clear();
-    }
-
-    if (flags & OT_CHANGED_THREAD_NETDATA)
-    {
-        /**
-         * Whenever Thread Network Data is changed, it is necessary to check if generation of global
-         * addresses is needed. This operation is performed internally by the OpenThread CLI module.
-         * To lower power consumption, the examples that implement Thread Sleepy End Device role
-         * don't use the OpenThread CLI module. Therefore otIp6SlaacUpdate util is used to create
-         * IPv6 addresses.
-         */
-        otIp6SlaacUpdate(thread_ot_instance_get(), m_slaac_addresses,
-                         sizeof(m_slaac_addresses) / sizeof(m_slaac_addresses[0]),
-                         otIp6CreateRandomIid, NULL);
     }
 
     NRF_LOG_INFO("State changed! Flags: 0x%08x Current role: %d\r\n", flags, otThreadGetDeviceRole(p_context));
@@ -218,7 +191,7 @@ static void thread_instance_init(void)
 {
     thread_configuration_t thread_configuration =
     {
-        .role                  = RX_OFF_WHEN_IDLE, // Sleepy End Device
+        .radio_mode            = THREAD_RADIO_MODE_RX_OFF_WHEN_IDLE,
         .autocommissioning     = true,
         .poll_period           = 2500,
         .default_child_timeout = 10,
@@ -233,11 +206,10 @@ static void thread_instance_init(void)
  */
 static void thread_coap_init(void)
 {
-    thread_coap_configuration_t thread_coap_configuration =
+    thread_coap_utils_configuration_t thread_coap_configuration =
     {
         .coap_server_enabled               = false,
         .coap_client_enabled               = true,
-        .coap_cloud_enabled                = false,
         .configurable_led_blinking_enabled = false,
     };
 

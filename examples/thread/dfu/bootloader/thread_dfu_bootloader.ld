@@ -8,9 +8,10 @@ MEMORY
   FLASH (rx) : ORIGIN = 0xf8000, LENGTH = 0x6000
   RAM (rwx) :  ORIGIN = 0x20000008, LENGTH = 0x3fff8
   mbr_params_page (r) : ORIGIN = 0x000FE000, LENGTH = 0x1000
-  uicr_mbr_params_page (r) : ORIGIN = 0x10001018, LENGTH = 0x4
+  uicr_mbr_params_page (r) : ORIGIN = 0x00000FFC, LENGTH = 0x4
   bootloader_settings_page (r) : ORIGIN = 0x000FF000, LENGTH = 0x1000
-  uicr_bootloader_start_address (r) : ORIGIN = 0x10001014, LENGTH = 0x4
+  uicr_bootloader_start_address (r) : ORIGIN = 0x00000FF8, LENGTH = 0x4
+  legacy_uicr_bootloader_start_address (r) : ORIGIN = 0x10001014, LENGTH = 0x4
 }
 
 SECTIONS
@@ -39,6 +40,12 @@ SECTIONS
     KEEP(*(SORT(.uicr_bootloader_start_address*)))
     PROVIDE(__stop_uicr_bootloader_start_address = .);
   } > uicr_bootloader_start_address
+  .legacy_uicr_bootloader_start_address :
+  {
+    PROVIDE(__start_legacy_uicr_bootloader_start_address = .);
+    KEEP(*(SORT(.legacy_uicr_bootloader_start_address*)))
+    PROVIDE(__stop_legacy_uicr_bootloader_start_address = .);
+  } > legacy_uicr_bootloader_start_address
 }
 
 SECTIONS

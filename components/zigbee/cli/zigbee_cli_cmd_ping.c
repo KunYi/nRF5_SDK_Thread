@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -306,7 +306,7 @@ static zb_uint32_t get_request_duration(ping_request_t * p_request)
     return time_diff;
 }
 
-/**@bried Default handler for incoming ping request APS acknowledgements.
+/**@brief Default handler for incoming ping request APS acknowledgments.
  *
  * @details  If there is a user callback defined for the acknowledged request,
  *           the callback with PING_EVT_ACK_RECEIVED event will be called.
@@ -339,7 +339,7 @@ static zb_void_t dispatch_user_callback(zb_uint8_t param)
     }
     else
     {
-        NRF_LOG_INST_ERROR(m_log.p_log, "Ping requst acknowledged with an unknown destination address type: %d", p_cmd_ping_status->dst_addr.addr_type);
+        NRF_LOG_INST_ERROR(m_log.p_log, "Ping request acknowledged with an unknown destination address type: %d", p_cmd_ping_status->dst_addr.addr_type);
         ZB_FREE_BUF_BY_REF(param);
         return;
     }
@@ -381,6 +381,11 @@ static zb_void_t dispatch_user_callback(zb_uint8_t param)
             NRF_LOG_INST_ERROR(m_log.p_log, "Ping request returned error status: %d",
                                              p_cmd_ping_status->status);
         }
+    }
+    else
+    {
+        NRF_LOG_INST_WARNING(m_log.p_log, "Unknown ping command callback called with status: %d",
+                             p_cmd_ping_status->status);
     }
 
     ZB_FREE_BUF_BY_REF(param);
@@ -548,10 +553,12 @@ static zb_void_t ping_reply_send(ping_reply_t * p_reply)
     p_buf = ZB_GET_OUT_BUF();
     if (!p_buf)
     {
+        NRF_LOG_INST_WARNING(m_log.p_log, "Drop ping request due to the lack of output buffers");
         ping_release_reply(p_reply);
         return;
     }
 
+    NRF_LOG_INST_DEBUG(m_log.p_log, "Send ping reply");
     p_cmd_buf = ZB_ZCL_START_PACKET(p_buf);
     *(p_cmd_buf++) = ZIGBEE_PING_FRAME_CONTROL_FIELD;
     *(p_cmd_buf++) = p_reply->ping_seq;
@@ -650,7 +657,7 @@ static zb_uint8_t cli_agent_ep_handler_ping(zb_uint8_t param)
         return ZB_FALSE;
     }
 
-    NRF_LOG_INST_INFO(m_log.p_log, "New ping frame received, param: %d", param);
+    NRF_LOG_INST_DEBUG(m_log.p_log, "New ping frame received, param: %d", param);
     ping_req_indicate(p_zcl_cmd_buf);
 
     if (p_cmd_info->cmd_id == PING_ECHO_REPLY)
@@ -714,6 +721,7 @@ static zb_uint8_t cli_agent_ep_handler_ping(zb_uint8_t param)
 
         if (p_reply == NULL)
         {
+            NRF_LOG_INST_WARNING(m_log.p_log, "Cannot obtain new row for incomming ping request");
             return ZB_FALSE;
         }
 
@@ -723,10 +731,14 @@ static zb_uint8_t cli_agent_ep_handler_ping(zb_uint8_t param)
 
         if (p_cmd_info->cmd_id == PING_ECHO_REQUEST)
         {
+            NRF_LOG_INST_DEBUG(m_log.p_log,
+                               "PING echo request with APS ACK received");
             p_reply->send_ack = 1;
         }
         else
         {
+            NRF_LOG_INST_DEBUG(m_log.p_log,
+                               "PING echo request without APS ACK received");
             p_reply->send_ack = 0;
         }
 
@@ -736,6 +748,7 @@ static zb_uint8_t cli_agent_ep_handler_ping(zb_uint8_t param)
         }
         else
         {
+            NRF_LOG_INST_WARNING(m_log.p_log, "Drop ping request due to incorrect address type");
             ping_release_reply(p_reply);
             ZB_FREE_BUF(p_zcl_cmd_buf);
             return ZB_TRUE;
@@ -746,7 +759,7 @@ static zb_uint8_t cli_agent_ep_handler_ping(zb_uint8_t param)
     }
     else if (p_cmd_info->cmd_id == PING_NO_ECHO_REQUEST)
     {
-        NRF_LOG_INST_INFO(m_log.p_log,
+        NRF_LOG_INST_DEBUG(m_log.p_log,
                           "PING request without ECHO received");
     }
     else
@@ -771,7 +784,7 @@ static zb_uint8_t cli_agent_ep_handler_ping(zb_uint8_t param)
  * zcl ping 0b010eaafd745dfa 32
  * @endcode
  *
- * @pre Only after starting @ref zigbee.
+ * @pre Ping only after starting @ref zigbee.
  *
  * Issue a ping-style command to another CLI device of the address `dst_addr`
  * by using `payload_size` bytes of payload.<br>

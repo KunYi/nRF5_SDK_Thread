@@ -6,7 +6,7 @@ GROUP(-lgcc -lc -lnosys)
 MEMORY
 {
   FLASH (rx) : ORIGIN = 0x26000, LENGTH = 0xda000
-  RAM (rwx) :  ORIGIN = 0x20007978, LENGTH = 0x38688
+  RAM (rwx) :  ORIGIN = 0x20011718, LENGTH = 0x2e8e8
 }
 
 SECTIONS
@@ -63,17 +63,17 @@ SECTIONS
     KEEP(*(SORT(.sdh_ble_observers*)))
     PROVIDE(__stop_sdh_ble_observers = .);
   } > FLASH
+  .pwr_mgmt_data :
+  {
+    PROVIDE(__start_pwr_mgmt_data = .);
+    KEEP(*(SORT(.pwr_mgmt_data*)))
+    PROVIDE(__stop_pwr_mgmt_data = .);
+  } > FLASH
     .nrf_queue :
   {
     PROVIDE(__start_nrf_queue = .);
     KEEP(*(.nrf_queue))
     PROVIDE(__stop_nrf_queue = .);
-  } > FLASH
-    .zb_ep_handlers :
-  {
-    PROVIDE(__start_zb_ep_handlers = .);
-    KEEP(*(.zb_ep_handlers))
-    PROVIDE(__stop_zb_ep_handlers = .);
   } > FLASH
   .sdh_stack_observers :
   {
@@ -111,12 +111,6 @@ SECTIONS
     KEEP(*(SORT(.crypto_data*)))
     PROVIDE(__stop_crypto_data = .);
   } > FLASH
-  .pwr_mgmt_data :
-  {
-    PROVIDE(__start_pwr_mgmt_data = .);
-    KEEP(*(SORT(.pwr_mgmt_data*)))
-    PROVIDE(__stop_pwr_mgmt_data = .);
-  } > FLASH
   .log_const_data :
   {
     PROVIDE(__start_log_const_data = .);
@@ -129,7 +123,14 @@ SECTIONS
     KEEP(*(SORT(.log_backends*)))
     PROVIDE(__stop_log_backends = .);
   } > FLASH
+    .zb_ep_handlers :
+  {
+    PROVIDE(__start_zb_ep_handlers = .);
+    KEEP(*(.zb_ep_handlers))
+    PROVIDE(__stop_zb_ep_handlers = .);
+  } > FLASH
 
 } INSERT AFTER .text
+
 
 INCLUDE "nrf_common.ld"

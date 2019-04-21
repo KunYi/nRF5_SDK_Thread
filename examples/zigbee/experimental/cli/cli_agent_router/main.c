@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -44,10 +44,26 @@
  * @ingroup zigbee_examples
  * @brief CLI agent for probing the Zigbee network.
  */
-#include "zboss_api.h"
-#include "zb_mem_config_max.h"
-#include "zb_ha_configuration_tool.h"
 
+#include "sdk_config.h"
+#include "zboss_api.h"
+
+#ifdef ZIGBEE_MEM_CONFIG_MODEL
+#if (ZIGBEE_MEM_CONFIG_MODEL == 0)
+/* None of the files zb_mem_config_*.h included, use default memory settings */
+#elif (ZIGBEE_MEM_CONFIG_MODEL == 1)
+#include "zb_mem_config_min.h"
+#elif (ZIGBEE_MEM_CONFIG_MODEL == 2)
+#include "zb_mem_config_med.h"
+#elif (ZIGBEE_MEM_CONFIG_MODEL == 3)
+#include "zb_mem_config_max.h"
+#else
+#error ZIGBEE_MEM_CONFIG_MODEL unsupported value, please check sdk_config.h
+#endif
+#endif
+
+#include "zb_ha_configuration_tool.h"
+#include "zigbee_helpers.h"
 #include "zigbee_cli.h"
 
 #include "nrf_drv_clock.h"
@@ -66,16 +82,9 @@
 #error Define ZB_ROUTER_ROLE to compile CLI agent (Router) source code.
 #endif
 
-typedef struct cli_agent_ctx_s
-{
-  zb_uint8_t role;
-} cli_agent_ctx_t;
-
-static cli_agent_ctx_t    m_device_ctx;
 static zb_uint8_t         m_attr_zcl_version   = ZB_ZCL_VERSION;
 static zb_uint8_t         m_attr_power_source  = ZB_ZCL_BASIC_POWER_SOURCE_UNKNOWN;
 static zb_uint16_t        m_attr_identify_time = 0;
-static zb_bool_t          m_stack_started      = ZB_FALSE;
 
 /* Declare attribute list for Basic cluster. */
 ZB_ZCL_DECLARE_BASIC_ATTRIB_LIST(basic_attr_list, &m_attr_zcl_version, &m_attr_power_source);
@@ -166,7 +175,10 @@ void zboss_signal_handler(zb_uint8_t param)
 
         case ZB_ZDO_SIGNAL_SKIP_STARTUP:
             NRF_LOG_INFO("Stack is started");
-            m_stack_started = ZB_TRUE;
+            break;
+
+        case ZB_NWK_SIGNAL_NO_ACTIVE_LINKS_LEFT:
+            NRF_LOG_WARNING("Parent is unreachable");
             break;
 
         default:
@@ -186,8 +198,6 @@ int main(void)
 {
     ret_code_t     ret;
     zb_ieee_addr_t ieee_addr;
-
-    UNUSED_VARIABLE(m_device_ctx);
 
     /* Intiialise the leds */
     bsp_board_init(BSP_INIT_LEDS);
@@ -221,7 +231,7 @@ int main(void)
     zb_set_long_address(ieee_addr);
 
     zb_set_bdb_primary_channel_set(IEEE_CHANNEL_MASK);
-    zb_set_nvram_erase_at_start(ERASE_PERSISTENT_CONFIG);
+    zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
 
     /* Register CLI Agent device context (endpoints). */
     ZB_AF_REGISTER_DEVICE_CTX(&cli_agent_ctx);
@@ -232,9 +242,16 @@ int main(void)
     /* Start ZigBee stack. */
     while(1)
     {
-        if (m_stack_started)
+        if (zb_cli_is_stack_started())
         {
+#ifdef ZIGBEE_CLI_DEBUG
+            if (!zb_cli_stack_is_suspended())
+            {
+                zboss_main_loop_iteration();
+            }
+#else
             zboss_main_loop_iteration();
+#endif
         }
         UNUSED_RETURN_VALUE(NRF_LOG_PROCESS());
         UNUSED_RETURN_VALUE(zb_cli_process());

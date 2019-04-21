@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -53,7 +53,6 @@
 #include "app_util.h"
 
 #include "nrf_cli.h"
-#include "nrf_cli_rtt.h"
 #include "nrf_cli_types.h"
 
 #include "boards.h"
@@ -78,6 +77,7 @@
 #include "app_usbd.h"
 #include "app_usbd_string_desc.h"
 #include "app_usbd_cdc_acm.h"
+#include "app_usbd_serial_num.h"
 #endif //CLI_OVER_USB_CDC_ACM
 
 #if defined(TX_PIN_NUMBER) && defined(RX_PIN_NUMBER)
@@ -127,6 +127,16 @@ static zb_uint8_t cli_ep;
 
 /* Counter timer. */
 APP_TIMER_DEF(m_timer_0);
+
+#ifdef ZIGBEE_CLI_DEBUG
+/* Debug mode indicator. */
+static zb_bool_t m_debug_mode = ZB_FALSE;
+#endif
+
+#ifdef ZIGBEE_CLI_DEBUG
+/* Zigbee stack processing suspension indicator. */
+static zb_bool_t m_suspended = ZB_FALSE;
+#endif
 
 #if CLI_OVER_USB_CDC_ACM
 
@@ -239,6 +249,9 @@ static void usbd_init(void)
         .ev_handler = app_usbd_event_execute,
         .ev_state_proc = usbd_user_ev_handler
     };
+
+    app_usbd_serial_num_generate();
+
     ret = app_usbd_init(&usbd_config);
     APP_ERROR_CHECK(ret);
 
@@ -307,10 +320,56 @@ void zb_cli_process(void)
         cli_process();
 }
 
-/**@brief Returns the number of the Endpoint used by the CLI
+/**@brief Returns the number of the Endpoint used by the CLI.
  */
 zb_uint8_t zb_get_cli_endpoint(void)
 {
     return cli_ep;
 }
+
+#ifdef ZIGBEE_CLI_DEBUG
+/**@brief Sets the debug mode.
+ */
+zb_void_t zb_cli_debug_set(zb_bool_t debug)
+{
+    m_debug_mode = debug;
+}
+#endif
+
+#ifdef ZIGBEE_CLI_DEBUG
+/**@brief Gets the debug mode.
+ */
+zb_bool_t zb_cli_debug_get(zb_void_t)
+{
+    return m_debug_mode;
+}
+#endif
+
+#ifdef ZIGBEE_CLI_DEBUG
+/**@brief Function for suspending the processing of the Zigbee main loop.
+ */
+zb_void_t zb_cli_suspend(zb_void_t)
+{
+    m_suspended = ZB_TRUE;
+}
+#endif
+
+#ifdef ZIGBEE_CLI_DEBUG
+/**@brief Function for resuming the processing of the Zigbee main loop.
+ */
+zb_void_t zb_cli_resume(zb_void_t)
+{
+    m_suspended = ZB_FALSE;
+}
+#endif
+
+#ifdef ZIGBEE_CLI_DEBUG
+/**@brief Function for getting the state of the Zigbee stack processing suspension.
+ */
+zb_bool_t zb_cli_stack_is_suspended(zb_void_t)
+{
+    return m_suspended;
+}
+#endif
+
 /** @} */

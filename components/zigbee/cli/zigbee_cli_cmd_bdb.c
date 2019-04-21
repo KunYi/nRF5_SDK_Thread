@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -60,7 +60,7 @@ static zb_bool_t            m_stack_is_started  = ZB_FALSE;
  * bdb role [<role>]
  * @endcode
  *
- * @pre Setting only before starting @ref zigbee. Reading only after starting @ref zigbee.
+ * @pre Setting only before @ref start "bdb start". Reading only after @ref start "bdb start".
  *
  * If the optional argument is not provided, get the state of the device.<br>
  *    Returns:
@@ -139,7 +139,15 @@ static void cmd_zb_role(nrf_cli_t const * p_cli, size_t argc, char **argv)
 }
 
 /**
- * @brief Start the commissioning process.
+ * @brief Start bdb top level commissioning process.
+ *
+ * This command can be called multiple times. If device is not on a network
+ * then it will attempt to join or form (depending on the role).
+ *
+ * If the device is on the network then the command will open the network for
+ * new devices to join.
+ *
+ * See Base Device Behaviour specification for details.
  *
  * @code
  * > bdb start
@@ -149,8 +157,9 @@ static void cmd_zb_role(nrf_cli_t const * p_cli, size_t argc, char **argv)
  */
 static void cmd_zb_start(nrf_cli_t const * p_cli, size_t argc, char **argv)
 {
-    uint32_t channel;
-    zb_bool_t ret;
+    uint32_t   channel;
+    zb_bool_t  ret;
+    zb_uint8_t mode_mask = ZB_BDB_NETWORK_STEERING;
 
     if (nrf_cli_help_requested(p_cli))
     {
@@ -158,41 +167,39 @@ static void cmd_zb_start(nrf_cli_t const * p_cli, size_t argc, char **argv)
         return;
     }
 
-    if (m_stack_is_started == ZB_TRUE)
+    if (m_stack_is_started == ZB_FALSE)
     {
-        print_error(p_cli, "Device already commissioned or commissioning is in progress");
-        return;
+        channel = zb_get_bdb_primary_channel_set();
+
+        switch (m_default_role)
+        {
+            case ZB_NWK_DEVICE_TYPE_ROUTER:
+                zb_set_network_router_role(channel);
+                nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "Started router\r\n");
+                break;
+
+            case ZB_NWK_DEVICE_TYPE_COORDINATOR:
+                zb_set_network_coordinator_role(channel);
+                mode_mask |= ZB_BDB_NETWORK_FORMATION;
+                nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "Started coordinator\r\n");
+                break;
+
+            default:
+                print_error(p_cli, "Role unsupported\r\n");
+                return;
+        }
+
+
+        UNUSED_RETURN_VALUE(zboss_start_no_autostart());
+        /* Iterate one time to propagate the signal to the zboss_signal_handler */
+        zboss_main_loop_iteration();
     }
 
-    channel = zb_get_bdb_primary_channel_set();
-
-    switch (m_default_role)
-    {
-        case ZB_NWK_DEVICE_TYPE_ROUTER:
-            zb_set_network_router_role(channel);
-            nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "Started router\r\n");
-            break;
-
-        case ZB_NWK_DEVICE_TYPE_COORDINATOR:
-            zb_set_network_coordinator_role(channel);
-            nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "Started coordinator\r\n");
-            break;
-
-        default:
-            print_error(p_cli, "Role unsupported\r\n");
-            return;
-    }
-
-    m_stack_is_started = ZB_TRUE;
-
-    UNUSED_RETURN_VALUE(zboss_start_no_autostart());
-    /* Iterate one time to propagate the signal to the zboss_signal_handler */
-    zboss_main_loop_iteration();
-
-    ret = bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING | ZB_BDB_NETWORK_FORMATION);
+    ret = bdb_start_top_level_commissioning(mode_mask);
 
     if (ret)
     {
+        m_stack_is_started = ZB_TRUE;
         print_done(p_cli, ZB_FALSE);
     }
     else
@@ -207,7 +214,7 @@ static void cmd_zb_start(nrf_cli_t const * p_cli, size_t argc, char **argv)
  * bdb extpanid [<h:id>]
  * @endcode
  *
- * @pre Setting only before starting @ref zigbee. Reading only after starting @ref zigbee.
+ * @pre Setting only before @ref start "bdb start". Reading only after @ref start "bdb start".
  *
  * If the optional argument is not provided, gets the extended PAN ID of the joined network.
  *
@@ -222,7 +229,7 @@ static void cmd_zb_extpanid(nrf_cli_t const * p_cli, size_t argc, char **argv)
     if (argc == 1)
     {
         zb_get_extended_pan_id(extpanid);
-        print_64(p_cli, extpanid);
+        print_hexdump(p_cli, extpanid, sizeof(extpanid), true);
         print_done(p_cli, ZB_TRUE);
     }
     else if (argc == 2)
@@ -246,13 +253,52 @@ static void cmd_zb_extpanid(nrf_cli_t const * p_cli, size_t argc, char **argv)
     }
 }
 
-/** @brief Set or get 802.15.4 channel
+/**@brief Set or get the Zigbee Pan ID value.
+ *
+ * @code
+ * bdb panid [<h:id>]
+ * @endcode
+ *
+ * @pre Setting only before @ref start "bdb start". Reading only after @ref start "bdb start".
+ *
+ * If the optional argument is not provided, gets the PAN ID of the joined network.
+ * If the optional argument is provided, sets the PAN ID to `id`.
+ *
+ */
+static void cmd_zb_panid(nrf_cli_t const * p_cli, size_t argc, char **argv)
+{
+    if (argc == 1)
+    {
+        nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "%0x", ZB_PIBCACHE_PAN_ID());
+        print_done(p_cli, ZB_TRUE);
+    }
+    else if (argc == 2)
+    {
+        zb_uint16_t pan_id;
+
+        if (sscanf(argv[1], "%hx", &pan_id))
+        {
+            ZB_PIBCACHE_PAN_ID() = pan_id;
+            print_done(p_cli, ZB_FALSE);
+        }
+        else
+        {
+            print_error(p_cli, "Failed to parse PAN ID");
+        }
+    }
+    else
+    {
+        print_error(p_cli, "Unsupported format. Expected panid <h:id>");
+    }
+}
+
+/** @brief Set or get 802.15.4 channel.
  *
  * @code
  * bdb channel <n>
  * @endcode
  *
- *  @pre Setting only before starting @ref zigbee.
+ *  @pre Setting only before @ref start "bdb start".
  *
  * If the optional argument is not provided, get the current number and bitmask of the channel.
  *
@@ -304,7 +350,8 @@ static void cmd_zb_channel(nrf_cli_t const * p_cli, size_t argc, char **argv)
             }
             nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "\r\n");
         }
-
+        
+        print_done(p_cli, ZB_FALSE);
         return;
     }
     else if (argc == 2)
@@ -322,7 +369,7 @@ static void cmd_zb_channel(nrf_cli_t const * p_cli, size_t argc, char **argv)
             channel_number = 0;
             sscanf(argv[1], "%lx", &channel_mask);
 
-            if (!(channel_mask & 0x7FFF800))
+            if ((!(channel_mask & 0x7FFF800)) || (channel_mask & (~0x7FFF800)))
             {
                 print_error(p_cli, "Bitmask invalid");
                 return;
@@ -358,14 +405,249 @@ static void cmd_zb_channel(nrf_cli_t const * p_cli, size_t argc, char **argv)
     }
 }
 
+
+/** @brief Set install code on the device, add information about the install code
+ *  on the trust center, set the trust center install code policy.
+ *
+ * @code
+ * bdb ic add <h:install code> <h:eui64>
+ * bdb ic set <h:install code>
+ * bdb ic policy <enable|disable>
+ * @endcode
+ *
+ * @pre Setting and defining policy only before @ref start "bdb start".
+ * Adding only after @ref start "bdb start".
+ * 
+ * <tt>bdb ic set</tt> must only be used on a joining device.
+ *
+ * <tt>bdb ic add</tt> must only be used on a coordinator.
+ *
+ * <tt>bdb ic policy</tt> must only be used on a coordinator.
+ *
+ * Provide the install code as an ASCII-encoded hex including CRC16.
+ *
+ * For production devices, an install code must be installed by the production
+ * configuration present in flash.
+ *
+ *
+ * Example:
+ * @code
+ * > bdb ic add 83FED3407A939723A5C639B26916D505C3B5 0B010E2F79E9DBFA
+ * Done
+ * @endcode
+ */
+static void cmd_zb_install_code(nrf_cli_t const * p_cli, size_t argc, char **argv)
+{
+    const char *   p_err_msg = NULL;
+    zb_addr_u      addr;
+    zb_uint8_t     addr_mode;
+    zb_uint8_t     ic[ZB_CCM_KEY_SIZE + 2]; // +2 for CRC16
+
+    if (nrf_cli_help_requested(p_cli) || (argc == 1))
+    {
+        print_usage(p_cli, argv[0],
+                    "ic - set or add install code. Enable IC policy.\r\n"
+                    "ic set <h:install code> - set the ic code to <install_code>\r\n"
+                    "ic add <h:install code> <h:eui64> - add ic for device with given eui43\r\n"
+                    "ic policy - set Trust Center install code policy");
+        return;
+    }
+
+    if ((argc == 2) && (strcmp(argv[0], "set") == 0))
+    {
+        if (!parse_hex_str(argv[1], ic, sizeof(ic)))
+        {
+            p_err_msg = "Failed to parse IC";
+            goto exit;
+        }
+
+        if (zb_secur_ic_set(ic) != RET_OK)
+        {
+            p_err_msg = "Failed to set IC";
+            goto exit;
+        }
+    }
+    else if ((argc == 3) && (strcmp(argv[0], "add") == 0))
+    {
+        if (!parse_hex_str(argv[1], ic, sizeof(ic)))
+        {
+            p_err_msg = "Failed to parse IC";
+            goto exit;
+        }
+
+        if (!parse_address_string(argv[2], &addr, &addr_mode) ||
+             addr_mode != ZB_APS_ADDR_MODE_64_ENDP_PRESENT)
+        {
+            p_err_msg = "Failed to parse eui64";
+            goto exit;
+        }
+
+        if (zb_secur_ic_add(addr.addr_long, ic) != RET_OK)
+        {
+            p_err_msg = "Failed to add IC";
+            goto exit;
+        }
+    }
+    else if ((argc == 2) && (strcmp(argv[0], "policy") == 0))
+    {
+        if (strcmp(argv[1], "enable") == 0)
+        {
+            zb_set_installcode_policy(ZB_TRUE);
+        }
+        else if (strcmp(argv[1], "disable") == 0)
+        {
+            zb_set_installcode_policy(ZB_FALSE);
+        }
+        else
+        {
+            p_err_msg = "Syntax error";
+            goto exit;
+        }
+    }
+    else
+    {
+        p_err_msg ="Syntax error";
+    }
+
+exit:
+    if (p_err_msg)
+    {
+        print_error(p_cli, p_err_msg);
+    }
+    else
+    {
+        print_done(p_cli, ZB_FALSE);
+    }
+}
+
+/** @brief Enable or disable the legacy device support.
+ *
+ * @code
+ * bdb legacy <enable|disable>
+ * @endcode
+ *
+ * Allow or disallow legacy pre-r21 devices on the Zigbee network.
+ *
+ * @pre Use only after @ref start "bdb start".
+ *
+ * Example:
+ * @code
+ * > bdb legacy enable
+ * Done
+ * @endcode
+ */
+static void cmd_zb_legacy(nrf_cli_t const * p_cli, size_t argc, char **argv)
+{
+    if (nrf_cli_help_requested(p_cli) || (argc != 2))
+    {
+        print_usage(p_cli, argv[0],
+                    "enable - allow for legacy (pre ZB 3.0 devices)\r\n"
+                    "disable - disallow for legacy devices");
+        return;
+    }
+
+    if (!m_stack_is_started)
+    {
+        print_error(p_cli, "Stack not started");
+        return;
+    }
+
+    if (strcmp(argv[1], "enable") == 0)
+    {
+        zb_bdb_set_legacy_device_support(1);
+    }
+    else if (strcmp(argv[1], "disable") == 0)
+    {
+        zb_bdb_set_legacy_device_support(0);
+    }
+    else
+    {
+        print_error(p_cli, "Unrecognized option");
+        return;
+    }
+
+    print_done(p_cli, ZB_FALSE);
+}
+
+/** @brief Set network key.
+ *
+ * @code
+ * bdb nwkkey <h:key>>
+ * @endcode
+ *
+ * Set a pre-defined network key instead of a random one.
+ *
+ * @pre Setting only before @ref start "bdb start".
+ *
+ * Example:
+ * @code
+ * > bdb nwkkey 00112233445566778899aabbccddeeff
+ * Done
+ * @endcode
+ */
+static void cmd_zb_nwkkey(nrf_cli_t const * p_cli, size_t argc, char **argv)
+{
+    if (nrf_cli_help_requested(p_cli))
+    {
+        print_usage(p_cli, argv[0],
+                    "<h:key>");
+        return;
+    }
+
+    if (m_stack_is_started)
+    {
+        print_error(p_cli, "Stack already started");
+        return;
+    }
+
+    if (argc == 2)
+    {
+        zb_uint8_t key[ZB_CCM_KEY_SIZE];
+        if (parse_hex_str(argv[1], key, sizeof(key)))
+        {
+            zb_secur_setup_nwk_key(key, 0);
+        }
+        else
+        {
+            print_error(p_cli, "Failed to parse key");
+            return;
+        }
+    }
+    else
+    {
+        print_error(p_cli, "Syntax error");
+        return;
+    }
+
+    print_done(p_cli, ZB_FALSE);
+}
+
+zb_bool_t zb_cli_is_stack_started(void)
+{
+    return m_stack_is_started;
+}
+
+NRF_CLI_CREATE_STATIC_SUBCMD_SET(m_sub_ic)
+{
+    NRF_CLI_CMD(add, NULL, "add install code", cmd_zb_install_code),
+    NRF_CLI_CMD(set, NULL, "set install code", cmd_zb_install_code),
+    NRF_CLI_CMD(policy, NULL, "set TC install code policy", cmd_zb_install_code),
+    NRF_CLI_SUBCMD_SET_END
+};
+
 NRF_CLI_CREATE_STATIC_SUBCMD_SET(m_sub_bdb)
 {
     NRF_CLI_CMD(role, NULL, "role get/set", cmd_zb_role),
     NRF_CLI_CMD(extpanid, NULL, "extpanid get/set", cmd_zb_extpanid),
+    NRF_CLI_CMD(panid, NULL, "panid get/set", cmd_zb_panid),
     NRF_CLI_CMD(start, NULL, "start commissionning", cmd_zb_start),
     NRF_CLI_CMD(channel, NULL, "channel get/set", cmd_zb_channel),
+    NRF_CLI_CMD(ic, &m_sub_ic, "install code manipulation", NULL),
+    NRF_CLI_CMD(legacy, NULL, "legacy mode enable/disable", cmd_zb_legacy),
+    NRF_CLI_CMD(nwkkey, NULL, "network key set", cmd_zb_nwkkey),
     NRF_CLI_SUBCMD_SET_END
 };
+
 NRF_CLI_CMD_REGISTER(bdb, &m_sub_bdb, "base device behaviour manipulation", NULL);
 
 /** @} */

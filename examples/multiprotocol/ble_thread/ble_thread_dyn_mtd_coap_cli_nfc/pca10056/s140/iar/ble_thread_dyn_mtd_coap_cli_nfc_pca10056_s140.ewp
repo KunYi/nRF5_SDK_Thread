@@ -181,6 +181,7 @@
           <state>CONFIG_GPIO_AS_PINRESET</state>
           <state>FLOAT_ABI_HARD</state>
           <state>MBEDTLS_CONFIG_FILE=&lt;nrf_crypto_mbedtls_config.h&gt;</state>
+          <state>MULTIPROTOCOL_802154_CONFIG_PRESENT</state>
           <state>NRF52840_XXAA</state>
           <state>NRFX_PRS_ENABLED=0</state>
           <state>NRF_CRYPTO_MAX_INSTANCE_COUNT=1</state>
@@ -192,11 +193,6 @@
           <state>SWI_DISABLE0</state>
           <state>UART0_ENABLED=0</state>
           <state>UART1_ENABLED=1</state>
-          <state>uECC_ENABLE_VLI_API=0</state>
-          <state>uECC_OPTIMIZATION_LEVEL=3</state>
-          <state>uECC_SQUARE_FUNC=0</state>
-          <state>uECC_SUPPORT_COMPRESSED_POINT=0</state>
-          <state>uECC_VLI_NATIVE_LITTLE_ENDIAN=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -359,7 +355,6 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\nrf_ble_qwr</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\peer_manager</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\boards</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\drivers_nrf\usbd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\atomic</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\atomic_fifo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\atomic_flags</state>
@@ -379,6 +374,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\optiga</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\csense</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\csense_drv</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\delay</state>
@@ -446,11 +442,10 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\parser\record</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\text</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\uri</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\platform</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_lib</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_lib\hal_t2t</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_parser</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_lib</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_lib\hal_t4t</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_parser\apdu</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_parser\cc_file</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_parser\hl_detection_procedure</state>
@@ -460,10 +455,13 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\softdevice\s140\headers\nrf52</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\thread\utils</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\app_utils</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\thread\app_utils</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\micro-ecc\micro-ecc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\rsch\raal\softdevice</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_cc310\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon\include</state>
@@ -640,6 +638,7 @@
           <state>CONFIG_GPIO_AS_PINRESET</state>
           <state>FLOAT_ABI_HARD</state>
           <state>MBEDTLS_CONFIG_FILE=&lt;nrf_crypto_mbedtls_config.h&gt;</state>
+          <state>MULTIPROTOCOL_802154_CONFIG_PRESENT</state>
           <state>NRF52840_XXAA</state>
           <state>NRFX_PRS_ENABLED=0</state>
           <state>NRF_CRYPTO_MAX_INSTANCE_COUNT=1</state>
@@ -651,11 +650,6 @@
           <state>SWI_DISABLE0</state>
           <state>UART0_ENABLED=0</state>
           <state>UART1_ENABLED=1</state>
-          <state>uECC_ENABLE_VLI_API=0</state>
-          <state>uECC_OPTIMIZATION_LEVEL=3</state>
-          <state>uECC_SQUARE_FUNC=0</state>
-          <state>uECC_SUPPORT_COMPRESSED_POINT=0</state>
-          <state>uECC_VLI_NATIVE_LITTLE_ENDIAN=1</state>
         </option>
         <option>
           <name>AList</name>
@@ -785,7 +779,6 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\nrf_ble_qwr</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\peer_manager</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\boards</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\drivers_nrf\usbd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\atomic</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\atomic_fifo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\atomic_flags</state>
@@ -805,6 +798,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\optiga</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\csense</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\csense_drv</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\delay</state>
@@ -872,11 +866,10 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\parser\record</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\text</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\uri</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\platform</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_lib</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_lib\hal_t2t</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_parser</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_lib</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_lib\hal_t4t</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_parser\apdu</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_parser\cc_file</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t4t_parser\hl_detection_procedure</state>
@@ -886,10 +879,13 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\softdevice\s140\headers\nrf52</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\thread\utils</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\app_utils</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\thread\app_utils</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\micro-ecc\micro-ecc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nRF-IEEE-802.15.4-radio-driver\src\rsch\raal\softdevice</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_cc310\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon\include</state>
@@ -1055,7 +1051,7 @@
         </option>
         <option>
           <name>IlinkIcfFile</name>
-      <state>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\linker_scripts\openthread_nrf52840_multiprotocol.icf</state>
+      <state>$PROJ_DIR$\ble_thread_dyn_mtd_coap_cli_nfc_iar_nRF5x.icf</state>
         </option>
         <option>
           <name>IlinkIcfFileSlave</name>
@@ -1288,14 +1284,16 @@
     </settings>
   </configuration>  <group>
   <name>nrf_cc310</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_cc310\lib\libnrf_cc310_short_wchar_0.9.10.a</name>    </file>  </group>  <group>
-  <name>openthread</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\iar\libopenthread-cli-mtd.a</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\iar\libopenthread-diag.a</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\iar\libopenthread-mtd.a</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\iar\libopenthread-platform-utils.a</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\iar\libmbedcrypto.a</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\iar\libopenthread-nrf52840-softdevice-sdk.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_cc310\lib\cortex-m4\hard-float\short-wchar\libnrf_cc310_0.9.12.a</name>    </file>  </group>  <group>
+  <name>OpenThread</name>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libopenthread-cli-mtd.a</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libopenthread-diag.a</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libopenthread-mtd.a</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libopenthread-platform-utils.a</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libmbedcrypto.a</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libopenthread-nrf52840-softdevice-sdk.a</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libnordicsemi-nrf52840-radio-driver-softdevice.a</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\openthread\lib\nrf52840\iar\libopenthread-platform-utils.a</name>    </file>  </group>  <group>
   <name>nRF_Libraries</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\button\app_button.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\util\app_error.c</name>    </file>    <file>
@@ -1328,20 +1326,18 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\uart\retarget.c</name>    </file>  </group>  <group>
-  <name>nRF_Crypto backend uECC</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc\micro_ecc_backend_ecc.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc\micro_ecc_backend_ecdh.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc\micro_ecc_backend_ecdsa.c</name>    </file>  </group>  <group>
   <name>nRF_Drivers</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_clock.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_rng.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_uart.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\hal\nrf_nvmc.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\soc\nrfx_atomic.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_clock.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_gpiote.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_power_clock.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_nfct.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\prs\nrfx_prs.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_rng.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_timer.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_uart.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_uarte.c</name>    </file>  </group>  <group>
   <name>Application</name>    <file>
@@ -1392,7 +1388,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hash.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hmac.c</name>    </file>  </group>  <group>
   <name>nRF_Oberon_Crypto</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon\lib\nrf52\liboberon_short_wchar_2.0.5.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\liboberon_2.0.7.a</name>    </file>  </group>  <group>
   <name>nRF_BLE</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\peer_manager\auth_status_tracker.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\common\ble_advdata.c</name>    </file>    <file>
@@ -1415,7 +1411,6 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\peer_manager\security_dispatcher.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\ble\peer_manager\security_manager.c</name>    </file>  </group>  <group>
   <name>nRF_NFC</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_lib\hal_t2t\hal_nfc_t2t.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\connection_handover\ac_rec\nfc_ac_rec.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\connection_handover\ble_oob_advdata\nfc_ble_oob_advdata.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\connection_handover\common\nfc_ble_pair_common.c</name>    </file>    <file>
@@ -1426,6 +1421,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\connection_handover\le_oob_rec\nfc_le_oob_rec.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\generic\message\nfc_ndef_msg.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\ndef\generic\record\nfc_ndef_record.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\platform\nfc_platform.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\nfc\t2t_lib\nfc_t2t_lib_iar.a</name>    </file>  </group>  <group>
   <name>Example</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\thread\app_utils\thread_coap_utils.c</name>    </file>  </group>  <group>
@@ -1457,6 +1453,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ctr_drbg.c</name>    </file>  </group>  <group>
   <name>None</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52840.s</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\app_utils\multiprotocol_802154_config.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\mdk\system_nrf52840.c</name>    </file>  </group>  <group>
   <name>UTF8/UTF16 converter</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\utf_converter\utf.c</name>    </file>  </group></project>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -94,13 +94,10 @@
 
 #define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(50, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
+#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(200, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
 #define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
-#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
-#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
+#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(1000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
 
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
@@ -111,8 +108,6 @@
 
 #define LED_STRING                      "led"                                       /**< BLE UART string used to request switching to Thread mode. */
 
-#define NUM_SLAAC_ADDRESSES             4                                           /**< Number of SLAAC addresses. */
-
 #define SCHED_QUEUE_SIZE                32                                          /**< Maximum number of events in the scheduler queue. */
 #define SCHED_EVENT_DATA_SIZE           APP_TIMER_SCHED_EVENT_DATA_SIZE             /**< Maximum app_scheduler event size. */
 
@@ -120,15 +115,12 @@ BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                               
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
 BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
 
-static otNetifAddress m_slaac_addresses[NUM_SLAAC_ADDRESSES];                       /**< Buffer containing addresses resolved by SLAAC */
-
 static uint16_t       m_conn_handle          = BLE_CONN_HANDLE_INVALID;             /**< Handle of the current connection. */
 static uint16_t       m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;        /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 static ble_uuid_t     m_adv_uuids[]          =                                      /**< Universally unique service identifier. */
 {
     {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}
 };
-
 
 APP_TIMER_DEF(m_thread_timeout);                                                    /**< Timer used to expire Thread connection in case of attachment failure. */
 
@@ -237,62 +229,6 @@ static void services_init(void)
     nus_init.data_handler = nus_data_handler;
 
     err_code = ble_nus_init(&m_nus, &nus_init);
-    APP_ERROR_CHECK(err_code);
-}
-
-
-/**@brief Function for handling an event from the Connection Parameters Module.
- *
- * @details This function will be called for all events in the Connection Parameters Module
- *          which are passed to the application.
- *
- * @note All this function does is to disconnect. This could have been done by simply setting
- *       the disconnect_on_fail config parameter, but instead we use the event handler
- *       mechanism to demonstrate its use.
- *
- * @param[in] p_evt  Event received from the Connection Parameters Module.
- */
-static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
-{
-    uint32_t err_code;
-
-    if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED)
-    {
-        err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
-        APP_ERROR_CHECK(err_code);
-    }
-}
-
-
-/**@brief Function for handling errors from the Connection Parameters module.
- *
- * @param[in] nrf_error  Error code containing information about what went wrong.
- */
-static void conn_params_error_handler(uint32_t nrf_error)
-{
-    APP_ERROR_HANDLER(nrf_error);
-}
-
-
-/**@brief Function for initializing the Connection Parameters module.
- */
-static void conn_params_init(void)
-{
-    uint32_t               err_code;
-    ble_conn_params_init_t cp_init;
-
-    memset(&cp_init, 0, sizeof(cp_init));
-
-    cp_init.p_conn_params                  = NULL;
-    cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
-    cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
-    cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    cp_init.disconnect_on_fail             = false;
-    cp_init.evt_handler                    = on_conn_params_evt;
-    cp_init.error_handler                  = conn_params_error_handler;
-
-    err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -571,6 +507,8 @@ static void log_init(void)
  */
 static void power_manage(void)
 {
+    otInstance * p_instance = thread_ot_instance_get();
+
     switch (m_connection_state)
     {
     case CONNECTION_STATE_IDLE:
@@ -590,9 +528,9 @@ static void power_manage(void)
     case CONNECTION_STATE_THREAD_SEND:
     case CONNECTION_STATE_THREAD_SENT:
     case CONNECTION_STATE_THREAD_DISABLE:
-        if (!otTaskletsArePending(thread_ot_instance_get()) &&
-            (otPlatRadioGetState(thread_ot_instance_get()) == OT_RADIO_STATE_SLEEP ||
-             otPlatRadioGetState(thread_ot_instance_get()) == OT_RADIO_STATE_DISABLED))
+        if (!otTaskletsArePending(p_instance) &&
+            ((otPlatRadioGetState(p_instance) == OT_RADIO_STATE_SLEEP) ||
+             (otPlatRadioGetState(p_instance) == OT_RADIO_STATE_DISABLED)))
         {
             __WFE();
         }
@@ -606,9 +544,6 @@ static void power_manage(void)
 static void ble_stack_deinit(void)
 {
     uint32_t err_code;
-
-    err_code = ble_conn_params_stop();
-    APP_ERROR_CHECK(err_code);
 
     err_code = nrf_sdh_disable_request();
     APP_ERROR_CHECK(err_code);
@@ -653,20 +588,6 @@ static void thread_state_changed_callback(uint32_t aFlags, void *aContext)
             break;
         }
     }
-
-    if (aFlags & OT_CHANGED_THREAD_NETDATA)
-    {
-        /**
-         * Whenever Thread Network Data is changed, it is necessary to check if generation of global
-         * addresses is needed. This operation is performed internally by the OpenThread CLI module.
-         * To lower power consumption, the examples that implement Thread Sleepy End Device role
-         * don't use the OpenThread CLI module. Therefore otIp6SlaacUpdate util is used to create
-         * IPv6 addresses.
-         */
-        otIp6SlaacUpdate(thread_ot_instance_get(), m_slaac_addresses,
-                         sizeof(m_slaac_addresses) / sizeof(m_slaac_addresses[0]),
-                         otIp6CreateRandomIid, NULL);
-    }
 }
 
 
@@ -674,6 +595,8 @@ static void thread_state_changed_callback(uint32_t aFlags, void *aContext)
  */
 static void thread_message_start_sending(void)
 {
+    NRF_LOG_INFO("Start swithing to Thread protocol");
+
     if (m_connection_state != CONNECTION_STATE_BLE)
     {
         return;
@@ -692,10 +615,9 @@ static void thread_message_start_sending(void)
 
 /**@brief Send CoAP request using Thread network.
  */
-static void thread_message_send(otInstance * p_instance, uint8_t command)
+static void thread_message_send(uint8_t command)
 {
-    thread_coap_utils_multicast_light_request_send(p_instance,
-                                                   command,
+    thread_coap_utils_multicast_light_request_send(command,
                                                    THREAD_COAP_UTILS_MULTICAST_LINK_LOCAL);
     m_connection_state = CONNECTION_STATE_THREAD_SENT;
 }
@@ -715,17 +637,20 @@ static void thread_timeout(void * p_context)
  */
 static void application_fsm_process(void)
 {
-    uint32_t err_code;
+    uint32_t     err_code;
+    otInstance * p_instance = thread_ot_instance_get();
 
     switch (m_connection_state)
     {
-	case CONNECTION_STATE_BLE_DISCONNECT:
+    case CONNECTION_STATE_BLE_DISCONNECT:
+        NRF_LOG_INFO("Disconnecting from BLE connection");
+
+        m_connection_state = CONNECTION_STATE_BLE_DISCONNECTING;
+
         err_code = sd_ble_gap_disconnect(m_conn_handle,
                                          BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
         APP_ERROR_CHECK(err_code);
-
-        m_connection_state = CONNECTION_STATE_BLE_DISCONNECTING;
-		break;
+        break;
 
     case CONNECTION_STATE_BLE_DISABLE:
         switch_ble_to_thread();
@@ -739,7 +664,7 @@ static void application_fsm_process(void)
         break;
 
     case CONNECTION_STATE_THREAD_SEND:
-        thread_message_send(thread_ot_instance_get(), LIGHT_TOGGLE);
+        thread_message_send(THREAD_COAP_UTILS_LIGHT_CMD_TOGGLE);
         thread_process();
         break;
 
@@ -747,10 +672,10 @@ static void application_fsm_process(void)
         err_code = app_timer_stop(m_thread_timeout);
         APP_ERROR_CHECK(err_code);
 
-        if (!otTaskletsArePending(thread_ot_instance_get()) &&
-            !otLinkIsInTransmitState(thread_ot_instance_get()) &&
-             (otPlatRadioGetState(thread_ot_instance_get()) == OT_RADIO_STATE_SLEEP ||
-              otPlatRadioGetState(thread_ot_instance_get()) == OT_RADIO_STATE_DISABLED))
+        if (!otTaskletsArePending(p_instance)    &&
+            !otLinkIsInTransmitState(p_instance) &&
+            ((otPlatRadioGetState(p_instance) == OT_RADIO_STATE_SLEEP) ||
+             (otPlatRadioGetState(p_instance) == OT_RADIO_STATE_DISABLED)))
         {
             m_connection_state = CONNECTION_STATE_THREAD_DISABLE;
         }
@@ -779,11 +704,12 @@ static void thread_instance_init(void)
 
     thread_configuration_t thread_configuration =
     {
-        .role                  = RX_OFF_WHEN_IDLE,
+        .radio_mode            = THREAD_RADIO_MODE_RX_OFF_WHEN_IDLE,
         .autocommissioning     = true,
         .poll_period           = 60000,
         .default_child_timeout = 240000,
     };
+
     thread_init(&thread_configuration);
     thread_state_changed_callback_set(thread_state_changed_callback);
 
@@ -836,7 +762,6 @@ static void ble_stack_init(void)
     gatt_init();
     services_init();
     advertising_init();
-    conn_params_init();
 
     m_connection_state = CONNECTION_STATE_BLE;
 

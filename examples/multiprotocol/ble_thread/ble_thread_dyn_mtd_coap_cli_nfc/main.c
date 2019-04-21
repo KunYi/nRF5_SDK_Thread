@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -85,51 +85,49 @@
 #include <openthread/thread.h>
 #include <openthread/platform/platform-softdevice.h>
 
-#define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
+#define APP_BLE_CONN_CFG_TAG            1                                             /**< A tag identifying the SoftDevice BLE configuration. */
 
-#define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2        /**< Reply when unsupported features are requested. */
+#define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2          /**< Reply when unsupported features are requested. */
 
-#define DEVICE_NAME                     "Thread_UART"                               /**< Name of device. Will be included in the advertising data. */
-#define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
+#define DEVICE_NAME                     "Thread_UART"                                 /**< Name of device. Will be included in the advertising data. */
+#define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                    /**< UUID type for the Nordic UART Service (vendor specific). */
 
-#define APP_BLE_OBSERVER_PRIO           1                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
+#define APP_BLE_OBSERVER_PRIO           1                                             /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 
-#define APP_ADV_INTERVAL                MSEC_TO_UNITS(200, UNIT_0_625_MS)           /**< The advertising interval (200 ms), Advertising interval uses 0.625 ms unit. */
+#define APP_ADV_INTERVAL                MSEC_TO_UNITS(200, UNIT_0_625_MS)             /**< The advertising interval (200 ms), Advertising interval uses 0.625 ms unit. */
 
-#define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
+#define APP_ADV_DURATION                18000                                         /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(100, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (100 ms), Connection interval uses 1.25 ms units. */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(200, UNIT_1_25_MS)            /**< Maximum acceptable connection interval (200 ms), Connection interval uses 1.25 ms units. */
-#define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
-#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
-#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(100, UNIT_1_25_MS)              /**< Minimum acceptable connection interval (100 ms), Connection interval uses 1.25 ms units. */
+#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(200, UNIT_1_25_MS)              /**< Maximum acceptable connection interval (200 ms), Connection interval uses 1.25 ms units. */
+#define SLAVE_LATENCY                   0                                             /**< Slave latency. */
+#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)               /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
+#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                         /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
+#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                        /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
+#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                             /**< Number of attempts before giving up the connection parameter negotiation. */
 
-#define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+#define DEAD_BEEF                       0xDEADBEEF                                    /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-#define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
-#define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
-
-#define NUM_SLAAC_ADDRESSES             4                                           /**< Number of SLAAC addresses. */
+#define UART_TX_BUF_SIZE                256                                           /**< UART TX buffer size. */
+#define UART_RX_BUF_SIZE                256                                           /**< UART RX buffer size. */
 
 #ifndef NFC_PAIRING_MODE
-#define NFC_PAIRING_MODE                NFC_PAIRING_MODE_JUST_WORKS                 /**< Default NFC pairing mode in case no pairing mode is defined. */
+#define NFC_PAIRING_MODE                NFC_PAIRING_MODE_JUST_WORKS                   /**< Default NFC pairing mode in case no pairing mode is defined. */
 #endif
 
-#define SCHED_QUEUE_SIZE                32                                          /**< Maximum number of events in the scheduler queue. */
-#define SCHED_EVENT_DATA_SIZE           APP_TIMER_SCHED_EVENT_DATA_SIZE             /**< Maximum app_scheduler event size. */
+#define SCHED_QUEUE_SIZE                32                                            /**< Maximum number of events in the scheduler queue. */
+#define SCHED_EVENT_DATA_SIZE           APP_TIMER_SCHED_EVENT_DATA_SIZE               /**< Maximum app_scheduler event size. */
 
 
-BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                   /**< BLE NUS service instance. */
-NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
-BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
+BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                     /**< BLE NUS service instance. */
+NRF_BLE_GATT_DEF(m_gatt);                                                             /**< GATT module instance. */
+BLE_ADVERTISING_DEF(m_advertising);                                                   /**< Advertising module instance. */
 
-static otNetifAddress m_slaac_addresses[NUM_SLAAC_ADDRESSES];                       /**< Buffer containing addresses resolved by SLAAC */
+static thread_coap_utils_light_command_t m_command = THREAD_COAP_UTILS_LIGHT_CMD_OFF; /**< This variable stores command that has been most recently used. */
 
-static uint16_t       m_conn_handle          = BLE_CONN_HANDLE_INVALID;             /**< Handle of the current connection. */
-static uint16_t       m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;        /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
-static ble_uuid_t     m_adv_uuids[]          =                                      /**< Universally unique service identifier. */
+static uint16_t       m_conn_handle          = BLE_CONN_HANDLE_INVALID;               /**< Handle of the current connection. */
+static uint16_t       m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;          /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
+static ble_uuid_t     m_adv_uuids[]          =                                        /**< Universally unique service identifier. */
 {
     {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}
 };
@@ -396,25 +394,6 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
         }
     }
 
-    if (flags & OT_CHANGED_THREAD_PARTITION_ID)
-    {
-        thread_coap_utils_peer_addr_clear();
-    }
-
-    if (flags & OT_CHANGED_THREAD_NETDATA)
-    {
-        /**
-         * Whenever Thread Network Data is changed, it is necessary to check if generation of global
-         * addresses is needed. This operation is performed internally by the OpenThread CLI module.
-         * To lower power consumption, the examples that implement Thread Sleepy End Device role
-         * don't use the OpenThread CLI module. Therefore otIp6SlaacUpdate util is used to create
-         * IPv6 addresses.
-         */
-        otIp6SlaacUpdate(thread_ot_instance_get(), m_slaac_addresses,
-                         sizeof(m_slaac_addresses) / sizeof(m_slaac_addresses[0]),
-                         otIp6CreateRandomIid, NULL);
-    }
-
     NRF_LOG_INFO("State changed! Flags: 0x%08x Current role: %d\r\n",
                  flags,
                  otThreadGetDeviceRole(p_context));
@@ -431,25 +410,15 @@ void bsp_event_handler(bsp_event_t event)
     switch (event)
     {
         case BSP_EVENT_KEY_0:
-            thread_coap_utils_unicast_light_request_send(thread_ot_instance_get(), LIGHT_TOGGLE);
+            thread_coap_utils_unicast_light_request_send(THREAD_COAP_UTILS_LIGHT_CMD_TOGGLE);
             break;
 
         case BSP_EVENT_KEY_1:
         {
-            uint8_t command;
-            thread_coap_utils_mcast_light_on_toggle();
+            m_command = ((m_command == THREAD_COAP_UTILS_LIGHT_CMD_OFF) ? THREAD_COAP_UTILS_LIGHT_CMD_ON :
+                                                                          THREAD_COAP_UTILS_LIGHT_CMD_OFF);
 
-            if (thread_coap_utils_mcast_light_on_get())
-            {
-                command = LIGHT_ON;
-            }
-            else
-            {
-                command = LIGHT_OFF;
-            }
-
-            thread_coap_utils_multicast_light_request_send(thread_ot_instance_get(),
-                                                           command,
+            thread_coap_utils_multicast_light_request_send(m_command,
                                                            THREAD_COAP_UTILS_MULTICAST_REALM_LOCAL);
             break;
         }
@@ -476,7 +445,7 @@ void bsp_event_handler(bsp_event_t event)
         }
 
         case BSP_EVENT_KEY_3:
-            thread_coap_utils_provisioning_request_send(thread_ot_instance_get());
+            thread_coap_utils_provisioning_request_send();
             break;
 
         case BSP_EVENT_DISCONNECT:
@@ -690,9 +659,9 @@ static void timer_init(void)
  */
 static void thread_instance_init(void)
 {
-    thread_configuration_t  thread_configuration =
+    thread_configuration_t thread_configuration =
     {
-        .role                  = RX_OFF_WHEN_IDLE,
+        .radio_mode            = THREAD_RADIO_MODE_RX_OFF_WHEN_IDLE,
         .autocommissioning     = true,
         .poll_period           = 2500,
         .default_child_timeout = 10,
@@ -706,11 +675,10 @@ static void thread_instance_init(void)
  */
 static void thread_coap_init(void)
 {
-    thread_coap_configuration_t thread_coap_configuration =
+    thread_coap_utils_configuration_t thread_coap_configuration =
     {
         .coap_server_enabled                = false,
         .coap_client_enabled                = true,
-        .coap_cloud_enabled                 = false,
         .configurable_led_blinking_enabled  = false,
     };
 
@@ -733,29 +701,19 @@ static void thread_command_handler(const uint8_t * p_command_str, uint16_t lengt
 {
     if (strncmp(COMMAND_REQUEST_UNICAST, (char *)p_command_str, strlen(COMMAND_REQUEST_UNICAST)) == 0)
     {
-        thread_coap_utils_unicast_light_request_send(thread_ot_instance_get(), LIGHT_TOGGLE);
+        thread_coap_utils_unicast_light_request_send(THREAD_COAP_UTILS_LIGHT_CMD_TOGGLE);
     }
     else if (strncmp(COMMAND_REQUEST_MULTICAST, (char *)p_command_str, strlen(COMMAND_REQUEST_MULTICAST)) == 0)
     {
-        uint8_t command;
-        thread_coap_utils_mcast_light_on_toggle();
+        m_command = ((m_command == THREAD_COAP_UTILS_LIGHT_CMD_OFF) ? THREAD_COAP_UTILS_LIGHT_CMD_ON :
+                                                                      THREAD_COAP_UTILS_LIGHT_CMD_OFF);
 
-        if (thread_coap_utils_mcast_light_on_get())
-        {
-            command = LIGHT_ON;
-        }
-        else
-        {
-            command = LIGHT_OFF;
-        }
-
-        thread_coap_utils_multicast_light_request_send(thread_ot_instance_get(),
-                                                       command,
-                                                       THREAD_COAP_UTILS_MULTICAST_REALM_LOCAL);
+        thread_coap_utils_multicast_light_request_send(m_command,
+                                                        THREAD_COAP_UTILS_MULTICAST_REALM_LOCAL);
     }
     else if (strncmp(COMMAND_REQUEST_PROVISIONING, (char *)p_command_str, strlen(COMMAND_REQUEST_PROVISIONING)) == 0)
     {
-        thread_coap_utils_provisioning_request_send(thread_ot_instance_get());
+        thread_coap_utils_provisioning_request_send();
     }
     else
     {
@@ -854,7 +812,7 @@ int main(void)
         thread_process();
         app_sched_execute();
 
-        if (NRF_LOG_PROCESS() == false && !otTaskletsArePending(thread_ot_instance_get()))
+        if (NRF_LOG_PROCESS() == false)
         {
             thread_sleep();
         }

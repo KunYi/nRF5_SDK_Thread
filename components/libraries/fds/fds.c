@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -1628,13 +1628,16 @@ ret_code_t fds_register(fds_cb_t cb)
 
 static uint32_t flash_end_addr(void)
 {
-    uint32_t const bootloader_addr = NRF_UICR->NRFFW[0];
+    uint32_t const bootloader_addr = BOOTLOADER_ADDRESS;
     uint32_t const page_sz         = NRF_FICR->CODEPAGESIZE;
-#ifndef NRF52810_XXAA
-    uint32_t const code_sz         = NRF_FICR->CODESIZE;
+
+#if defined(NRF52810_XXAA) || defined(NRF52811_XXAA)
+    // Hardcode the number of flash pages, necessary for SoC emulation.
+    // nRF52810 on nRF52832 and
+    // nRF52811 on nRF52840
+    uint32_t const code_sz = 48;
 #else
-    // Number of flash pages, necessary to emulate the NRF52810 on NRF52832.
-    uint32_t const code_sz         = 48;
+   uint32_t const code_sz = NRF_FICR->CODESIZE;
 #endif
 
     uint32_t end_addr = (bootloader_addr != 0xFFFFFFFF) ? bootloader_addr : (code_sz * page_sz);

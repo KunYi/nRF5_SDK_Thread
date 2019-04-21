@@ -65,7 +65,7 @@ enum zb_zcl_alarms_attr_e
 {
   /*! @brief AlarmCount attribute */
   ZB_ZCL_ATTR_ALARMS_ALARM_COUNT_ID = 0x0000,
-  ZB_ZCL_ATTR_ALARMS_ALARM_TABLE_ID = 0xfffe
+  ZB_ZCL_ATTR_ALARMS_ALARM_TABLE_ID = 0xeffe
 };
 
 /** @brief Default value for AlarmCount attribute */
@@ -84,8 +84,9 @@ typedef struct zb_zcl_alarms_alarm_table_s
   zb_uint32_t timestamp;
 }  zb_zcl_alarms_alarm_table_t;
 
-/*! @name Color Control cluster internals
-    Internal structures for Color Control cluster
+/** @cond internals_doc */
+/*! @name Alarms cluster internals
+    Internal structures for Alarms cluster
     @internal
     @{
 */
@@ -98,21 +99,9 @@ typedef struct zb_zcl_alarms_alarm_table_s
   (zb_voidp_t) data_ptr                                                       \
 }
 
-
-/*!
-  Declare mandatory attribute list for Alarms cluster
-  @param attr_list - attribure list name
-
-#define ZB_ZCL_DECLARE_ALARMS_ATTRIB_LIST(attr_list)                          \
-    zb_uint16_t alarm_conunt_data_ctx_##attr_list = 0;                        \
-  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                 \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_ALARMS_ALARM_COUNT_ID,                     \
-                       (&(alarm_conunt_data_ctx_##attr_list)))                \
-  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
-
-*/
-
 /*! @} */ /* internal */
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /*! @} */ /* Alarms cluster attributes */
 
@@ -173,6 +162,7 @@ typedef ZB_PACKED_PRE struct zb_zcl_alarms_reset_alarm_req_s
     structure. If request contains invlid data, status will set to ZB_FALSE.
     @param data_buf - pointer to zb_buf_t buffer containing command request data
     @param reset_alarm_req - variable to save command request
+    @param status - variable to put parse status to (see @ref zb_zcl_parse_status_t).
     @note data_buf buffer should contain command request payload without ZCL header.
  */
 #define ZB_ZCL_ALARMS_GET_RESET_ALARM_REQ(data_buf, reset_alarm_req, status)       \
@@ -267,6 +257,7 @@ enum zb_zcl_alarms_cmd_resp_e
   ZB_ZCL_CMD_ALARMS_GET_ALARM_RES_ID       = 0x01   /**< Get alarm response command identifier. */
 };
 
+/** @cond internals_doc */
 /* Alarms cluster commands list : only for information - do not modify */
 #define ZB_ZCL_CLUSTER_ID_ALARMS_SERVER_ROLE_GENERATED_CMD_LIST ZB_ZCL_CMD_ALARMS_ALARM_ID
 
@@ -277,7 +268,8 @@ enum zb_zcl_alarms_cmd_resp_e
                                                ZB_ZCL_CMD_ALARMS_RESET_ALL_ALARMS_ID
 
 #define ZB_ZCL_CLUSTER_ID_ALARMS_SERVER_ROLE_RECEIVED_CMD_LIST ZB_ZCL_CLUSTER_ID_ALARMS_CLIENT_ROLE_GENERATED_CMD_LIST
-
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /*! @brief Structured representsation of Alarm command payload */
 typedef zb_zcl_alarms_reset_alarm_req_t zb_zcl_alarms_alarm_res_t;
@@ -330,9 +322,9 @@ typedef ZB_PACKED_PRE struct zb_zcl_alarm_get_alarm_res_s
 
 /** @brief Parses Reset alarm command and fills in data request
     structure. If request contains invalid data, status will set to ZB_FALSE.
-  * @param data_ptr - pointer to a variable of type @ref zb_zcl_alarms_alarm_res_t.
-  * @param buffer containing the packet (by pointer).
-  * @param status - variable to put parse status to (see @ref zb_zcl_parse_status_t).
+    @param data_ptr - pointer to a variable of type @ref zb_zcl_alarms_alarm_res_t.
+    @param buffer containing the packet (by pointer).
+    @param status - variable to put parse status to (see @ref zb_zcl_parse_status_t).
  */
 #define ZB_ZCL_ALARMS_GET_ALARM_RES(data_ptr, buffer, status)           \
 {                                                                       \
@@ -355,6 +347,7 @@ typedef ZB_PACKED_PRE struct zb_zcl_alarm_get_alarm_res_s
     structure or status = ZB_FALSE if request contains invlid data.
     @param data_buf - pointer to zb_buf_t buffer containing command response data
     @param get_alarm_res - command response record
+    @param status - variable to put parse status to (see @ref zb_zcl_parse_status_t)
     @note data_buf buffer should contain response command payload without ZCL header
  */
 #define ZB_ZCL_ALARMS_GET_GET_ALARM_RES(data_buf, get_alarm_res, status)         \
@@ -397,15 +390,14 @@ typedef ZB_PACKED_PRE struct zb_zcl_alarm_get_alarm_res_s
 {                                                                          \
   ZB_ZCL_ATTR_ALARMS_ALARM_TABLE_ID,                                       \
   ZB_ZCL_ATTR_TYPE_NULL,                                                   \
-  ZB_ZCL_ATTR_ACCESS_READ_ONLY,                                            \
+  ZB_ZCL_ATTR_ACCESS_INTERNAL,                                             \
   (zb_voidp_t) data_ptr                                                    \
 }
 
 
-/** @internal @brief Declare attribute list for Alarms cluster
+/** @brief Declare attribute list for Alarms cluster
     @param attr_list - attribure list name
     @param alarm_count - pointer to variable to store AlarmCount attribute value
-    @param max_alarm_count - Maximum AlarmCount value (from profile)
 */
 #define ZB_ZCL_DECLARE_ALARMS_ATTRIB_LIST(attr_list, alarm_count)                                     \
   zb_zcl_alarms_alarm_table_t alarm_table_data_ctx## _attr_list[ZB_ZCL_ALARMS_ALARM_COUNT_MAX_VALUE]; \

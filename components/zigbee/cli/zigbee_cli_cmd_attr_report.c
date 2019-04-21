@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -90,6 +90,7 @@ typedef struct {
     nrf_cli_t const * p_cli;
     uint8_t           tsn;
     bool              taken;
+    bool              is_broadcast;
 } tsn_ctx_t;
 
 // This structure representing all fields required to construct configure reporting requests.

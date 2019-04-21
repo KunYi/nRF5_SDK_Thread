@@ -79,6 +79,16 @@ enum zb_zcl_groups_name_support_e
   ZB_ZCL_ATTR_GROUPS_NAME_SUPPORTED  = 1 << 7 /* set to 1 the most significant bit */
 };
 
+/**
+ *  @brief Declare attribute list for Groups cluster.
+ *  @param attr_list - attribure list name.
+ *  @param name_support - pointer to variable to store name_support attribute value
+ */
+#define ZB_ZCL_DECLARE_GROUPS_ATTRIB_LIST(attr_list, name_support)      \
+  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                           \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_GROUPS_NAME_SUPPORT_ID, (name_support)) \
+  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
+
 /** @} */ /* Groups cluster attributes */
 
 /** @name Groups cluster command identifiers
@@ -115,6 +125,7 @@ enum zb_zcl_groups_cmd_resp_e
                                                         */
 };
 
+/** @cond internals_doc */
 /* GROUPS cluster commands list : only for information - do not modify */
 #define ZB_ZCL_CLUSTER_ID_GROUPS_SERVER_ROLE_GENERATED_CMD_LIST                   \
                                       ZB_ZCL_CMD_GROUPS_ADD_GROUP_RES,            \
@@ -133,6 +144,8 @@ enum zb_zcl_groups_cmd_resp_e
                                       ZB_ZCL_CMD_GROUPS_ADD_GROUP_IF_IDENTIFYING
 
 #define ZB_ZCL_CLUSTER_ID_GROUPS_SERVER_ROLE_RECEIVED_CMD_LIST ZB_ZCL_CLUSTER_ID_GROUPS_CLIENT_ROLE_GENERATED_CMD_LIST
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /** @} */ /* Groups cluster command identifiers */
 
@@ -768,16 +781,6 @@ zb_bool_t zb_zcl_process_groups_commands_cli(zb_uint8_t param);
   ZB_ZCL_ATTR_ACCESS_READ_ONLY,                                   \
   (zb_voidp_t) data_ptr                                           \
 }
-
-/**
- *  @internal @brief Declare attribute list for Groups cluster.
- *  @param attr_list - attribure list name.
- *  @param name_support - pointer to variable to store name_support attribute value
- */
-#define ZB_ZCL_DECLARE_GROUPS_ATTRIB_LIST(attr_list, name_support)      \
-  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                           \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_GROUPS_NAME_SUPPORT_ID, (name_support)) \
-  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
 
 /** @internal @brief Number of attributes mandatory for reporting in Groups cluster. */
 #define ZB_ZCL_GROUPS_REPORT_ATTR_COUNT 0

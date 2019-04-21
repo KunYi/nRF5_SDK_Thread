@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -48,8 +48,11 @@
 #include "zboss_api.h"
 #include "zb_mem_config_max.h"
 #include "zb_error_handler.h"
+#include "zigbee_helpers.h"
 
+#include "app_timer.h"
 #include "boards.h"
+#include "bsp.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -63,6 +66,8 @@
 #else
 #define ZIGBEE_NETWORK_STATE_LED          BSP_BOARD_LED_2                       /**< LED indicating that network is opened for new nodes. */
 #endif
+#define ZIGBEE_NETWORK_REOPEN_BUTTON      BSP_BOARD_BUTTON_0                    /**< Button which reopens the Zigbee Network. */
+#define ZIGBEE_MANUAL_STEERING            ZB_FALSE                              /**< If set to 1 then device will not open the network after forming or reboot. */
 
 #ifndef ZB_COORDINATOR_ROLE
 #error Define ZB_COORDINATOR_ROLE to compile coordinator source code.
@@ -79,11 +84,58 @@ static void log_init(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
-/**@brief Function for initializing LEDs.
+/**@brief Function for the Timer initialization.
+ *
+ * @details Initializes the timer module. This creates and starts application timers.
  */
-static void leds_init(void)
+static void timers_init(void)
 {
-    bsp_board_init(BSP_INIT_LEDS);
+    ret_code_t err_code;
+
+    // Initialize timer module.
+    err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+/**@brief Callback for button events.
+ *
+ * @param[in]   evt      Incoming event from the BSP subsystem.
+ */
+static void buttons_handler(bsp_event_t evt)
+{
+    zb_bool_t comm_status;
+
+    switch(evt)
+    {
+        case BSP_EVENT_KEY_0:
+            comm_status = bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
+            
+            if (comm_status)
+            {
+                NRF_LOG_INFO("Top level comissioning restated");
+            }
+            else
+            {
+                NRF_LOG_INFO("Top level comissioning hasn't finished yet!");
+            }
+            break;
+
+        default:
+            NRF_LOG_INFO("Unhandled BSP Event received: %d", evt);
+            break;
+    }
+}
+
+
+/**@brief Function for initializing LEDs and Buttons.
+ */
+static void leds_buttons_init(void)
+{
+    uint32_t err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, buttons_handler);
+    APP_ERROR_CHECK(err_code);
+    /* By default the bsp_init attaches BSP_KEY_EVENTS_{0-4} to the PUSH events of the corresponding buttons. */
+
+    bsp_board_leds_off();
 }
 
 /**@brief Callback used in order to visualise network steering period.
@@ -110,23 +162,46 @@ static zb_void_t bdb_restart_top_level_commissioning(zb_uint8_t param)
 void zboss_signal_handler(zb_uint8_t param)
 {
     /* Read signal description out of memory buffer. */
-    zb_zdo_app_signal_type_t sig = zb_get_app_signal(param, NULL);
-    zb_ret_t                 status = ZB_GET_APP_SIGNAL_STATUS(param);
-    zb_ret_t                 zb_err_code;
-    zb_bool_t                comm_status;
+    zb_zdo_app_signal_hdr_t * p_sg_p      = NULL;
+    zb_zdo_app_signal_type_t  sig         = zb_get_app_signal(param, &p_sg_p);
+    zb_ret_t                  status      = ZB_GET_APP_SIGNAL_STATUS(param);
+    zb_ret_t                  zb_err_code;
+    zb_bool_t                 comm_status;
 
     switch(sig)
     {
-        case ZB_BDB_SIGNAL_DEVICE_FIRST_START: // Device started and commissioned first time after NVRAM erase.
-        case ZB_BDB_SIGNAL_DEVICE_REBOOT:      // BDB initialization completed after device reboot, use NVRAM contents during initialization. Device joined/rejoined and started.
-            if (status == RET_OK)
+        case ZB_ZDO_SIGNAL_SKIP_STARTUP:
+            if (zb_bdb_is_factory_new())
             {
-                NRF_LOG_INFO("Device started OK. Start network steering.");
-                bsp_board_led_on(ZIGBEE_NETWORK_STATE_LED);
-                comm_status = bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
+                NRF_LOG_INFO("Start network steering & formation.");
+                comm_status = bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING | ZB_BDB_NETWORK_FORMATION);
                 ZB_COMM_STATUS_CHECK(comm_status);
             }
             else
+            {
+                comm_status = bdb_start_top_level_commissioning(ZB_BDB_INITIALIZATION);
+                ZB_COMM_STATUS_CHECK(comm_status);
+            }
+            break;
+
+        case ZB_BDB_SIGNAL_DEVICE_FIRST_START: // Device started and commissioned first time after NVRAM erase.
+            if (status == RET_OK)
+            {
+                if (ZIGBEE_MANUAL_STEERING == ZB_FALSE)
+                {
+                    NRF_LOG_INFO("Start network steering.");
+                    comm_status = bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
+                    ZB_COMM_STATUS_CHECK(comm_status);
+                }
+            }
+            else
+            {
+                NRF_LOG_ERROR("Failed to form network.");
+            }
+            break;
+
+        case ZB_BDB_SIGNAL_DEVICE_REBOOT:      // BDB initialization completed after device reboot, use NVRAM contents during initialization. Device joined/rejoined and started.
+            if (status != RET_OK)
             {
                 NRF_LOG_ERROR("Device startup failed. Status: %d. Retry network formation after 1 second.", status);
                 bsp_board_led_off(ZIGBEE_NETWORK_STATE_LED);
@@ -140,6 +215,7 @@ void zboss_signal_handler(zb_uint8_t param)
             {
                 /* Schedule an alarm to notify about the end of steering period */
                 NRF_LOG_INFO("Network steering started");
+                bsp_board_led_on(ZIGBEE_NETWORK_STATE_LED);
                 zb_err_code = ZB_SCHEDULE_ALARM(steering_finished, 0, ZB_TIME_ONE_SECOND * ZB_ZGP_DEFAULT_COMMISSIONING_WINDOW);
                 ZB_ERROR_CHECK(zb_err_code);
             }
@@ -149,6 +225,13 @@ void zboss_signal_handler(zb_uint8_t param)
                 bsp_board_led_off(ZIGBEE_NETWORK_STATE_LED);
                 zb_err_code = ZB_SCHEDULE_ALARM(bdb_restart_top_level_commissioning, 0, ZB_TIME_ONE_SECOND);
                 ZB_ERROR_CHECK(zb_err_code);
+            }
+            break;
+
+        case ZB_ZDO_SIGNAL_DEVICE_ANNCE:
+            {
+                zb_zdo_signal_device_annce_params_t * dev_annce_params = ZB_ZDO_SIGNAL_GET_PARAMS(p_sg_p, zb_zdo_signal_device_annce_params_t);
+                NRF_LOG_INFO("Device with a short address %hx commissionned", dev_annce_params->device_short_addr);
             }
             break;
 
@@ -180,16 +263,17 @@ int main(void)
     zb_ieee_addr_t ieee_addr;
 
     // Initialize.
+    timers_init();
     log_init();
-    leds_init();
+    leds_buttons_init();
 
     /* Set ZigBee stack logging level and traffic dump subsystem. */
     ZB_SET_TRACE_LEVEL(ZIGBEE_TRACE_LEVEL);
     ZB_SET_TRACE_MASK(ZIGBEE_TRACE_MASK);
     ZB_SET_TRAF_DUMP_OFF();
 
-    /* Initialize ZigBee stack. Pass "zdo_zc" to the stack logging system. */
-    ZB_INIT("zdo_zc");
+    /* Initialize ZigBee stack. */
+    ZB_INIT("zc");
 
     /* Set device address to the value read from FICR registers. */
     zb_osif_get_ieee_eui64(ieee_addr);
@@ -200,10 +284,18 @@ int main(void)
     zb_set_max_children(MAX_CHILDREN);
 
     /* Keep or erase NVRAM to save the network parameters after device reboot or power-off. */
-    zb_set_nvram_erase_at_start(ERASE_PERSISTENT_CONFIG);
+    zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
 
     /** Start Zigbee Stack. */
-    zb_err_code = zboss_start();
+    if (ZIGBEE_MANUAL_STEERING == ZB_TRUE)
+    {
+        zb_err_code = zboss_start_no_autostart();
+    }
+    else
+    {
+        zb_err_code = zboss_start();
+    }
+
     ZB_ERROR_CHECK(zb_err_code);
 
     while(1)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -48,6 +48,7 @@
 #include "zboss_api.h"
 #include "zb_mem_config_min.h"
 #include "zb_error_handler.h"
+#include "zigbee_helpers.h"
 
 #include "app_timer.h"
 #include "bsp.h"
@@ -60,7 +61,6 @@
 #define IEEE_CHANNEL_MASK                   (1l << ZIGBEE_CHANNEL)              /**< Scan only one, predefined channel to find the coordinator. */
 #define LIGHT_SWITCH_ENDPOINT               1                                   /**< Source endpoint used to control light bulb. */
 #define MATCH_DESC_REQ_START_DELAY          (2 * ZB_TIME_ONE_SECOND)            /**< Delay between the light switch startup and light bulb finding procedure. */
-#define MATCH_DESC_REQ_TIMEOUT              (5 * ZB_TIME_ONE_SECOND)            /**< Timeout for finding procedure. */
 #define MATCH_DESC_REQ_ROLE                 ZB_NWK_BROADCAST_RX_ON_WHEN_IDLE    /**< Find only non-sleepy device. */
 #define DEFAULT_GROUP_ID                    0xB331                              /**< Group ID, which will be used to control all light sources with a single command. */
 #define ERASE_PERSISTENT_CONFIG             ZB_FALSE                            /**< Do not erase NVRAM to save the network parameters after device reboot or power-off. NOTE: If this option is set to ZB_TRUE then do full device erase for all network devices before running other samples. */
@@ -93,7 +93,7 @@ typedef struct light_switch_ctx_s
 } light_switch_ctx_t;
 
 
-static zb_void_t find_light_bulb_timeout(zb_uint8_t param);
+static zb_void_t find_light_bulb(zb_uint8_t param);
 
 static light_switch_ctx_t m_device_ctx;
 static zb_uint8_t         m_attr_zcl_version   = ZB_ZCL_VERSION;
@@ -324,19 +324,25 @@ static zb_void_t find_light_bulb_cb(zb_uint8_t param)
         p_match_ep = (zb_uint8_t *)(p_resp + 1);
 
         NRF_LOG_INFO("Found bulb addr: 0x%x ep: %d", p_ind->src_addr, *p_match_ep);
-
-        if (!bulb_found)
-        {
-            zb_err_code = ZB_SCHEDULE_ALARM_CANCEL(find_light_bulb_timeout, ZB_ALARM_ANY_PARAM);
-            ZB_ERROR_CHECK(zb_err_code);
-        }
         bulb_found = ZB_TRUE;
-
-        bsp_board_led_on(BULB_FOUND_LED);
 
         zb_err_code = ZB_SCHEDULE_CALLBACK(add_group, param);
         ZB_ERROR_CHECK(zb_err_code);
         param = 0;
+    }
+    else if (p_resp->status == ZB_ZDP_STATUS_TIMEOUT)
+    {
+        if (bulb_found)
+        {
+            bsp_board_led_on(BULB_FOUND_LED);
+        }
+        else
+        {
+            NRF_LOG_INFO("Bulb not found, try again");
+            zb_err_code = ZB_SCHEDULE_ALARM(find_light_bulb, param, MATCH_DESC_REQ_START_DELAY);
+            ZB_ERROR_CHECK(zb_err_code);
+            param = 0; // Do not free buffer - it will be reused by find_light_bulb callback
+        }
     }
 
     if (param)
@@ -369,29 +375,6 @@ static zb_void_t find_light_bulb(zb_uint8_t param)
     p_req->cluster_list[1]  = ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL;
     /*lint -restore */
     UNUSED_RETURN_VALUE(zb_zdo_match_desc_req(param, find_light_bulb_cb));
-}
-
-/**@brief Finding procedure timeout handler.
- *
- * @param[in]   param   Reference to ZigBee stack buffer that will be used to construct find request.
- */
-static zb_void_t find_light_bulb_timeout(zb_uint8_t param)
-{
-    zb_ret_t zb_err_code;
-
-    if (param)
-    {
-        NRF_LOG_INFO("Bulb not found, try again");
-        zb_err_code = ZB_SCHEDULE_ALARM(find_light_bulb, param, MATCH_DESC_REQ_START_DELAY);
-        ZB_ERROR_CHECK(zb_err_code);
-        zb_err_code = ZB_SCHEDULE_ALARM(find_light_bulb_timeout, 0, MATCH_DESC_REQ_TIMEOUT);
-        ZB_ERROR_CHECK(zb_err_code);
-    }
-    else
-    {
-        zb_err_code = ZB_GET_OUT_BUF_DELAYED(find_light_bulb_timeout);
-        ZB_ERROR_CHECK(zb_err_code);
-    }
 }
 
 /**@brief Callback for detecting button press duration.
@@ -535,8 +518,6 @@ void zboss_signal_handler(zb_uint8_t param)
 
                 zb_err_code = ZB_SCHEDULE_ALARM(find_light_bulb, param, MATCH_DESC_REQ_START_DELAY);
                 ZB_ERROR_CHECK(zb_err_code);
-                zb_err_code = ZB_SCHEDULE_ALARM(find_light_bulb_timeout, 0, MATCH_DESC_REQ_TIMEOUT);
-                ZB_ERROR_CHECK(zb_err_code);
                 param = 0; // Do not free buffer - it will be reused by find_light_bulb callback
             }
             else
@@ -613,7 +594,7 @@ int main(void)
     zb_set_long_address(ieee_addr);
 
     zb_set_network_ed_role(IEEE_CHANNEL_MASK);
-    zb_set_nvram_erase_at_start(ERASE_PERSISTENT_CONFIG);
+    zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
 
     zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));

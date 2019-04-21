@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -62,6 +62,7 @@
 #include "zboss_api.h"
 #include "zb_mem_config_med.h"
 #include "zb_error_handler.h"
+#include "zigbee_helpers.h"
 
 #include "nordic_common.h"
 #include "nrf.h"
@@ -127,6 +128,7 @@
 #define RANGE_EXTENDER_ENDPOINT         7                                       /**< Endpoint for the Zigbee Range Extender device. */
 #define ERASE_PERSISTENT_CONFIG         ZB_FALSE                                /**< Do not erase NVRAM to save the network parameters after device reboot or power-off. NOTE: If this option is set to ZB_TRUE then do full device erase for all network devices before running other samples. */
 #define IEEE_CHANNEL_MASK               (1l << ZIGBEE_CHANNEL)                  /**< Scan only one, predefined channel to find the coordinator. */
+#define ZIGBEE_NETWORK_STATE_LED        BSP_BOARD_LED_2                         /**< LED indicating that light switch successfully joind ZigBee network. */
 
 
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
@@ -773,7 +775,7 @@ static void zigbee_init(void)
     /* Set static long IEEE address. */
     zb_set_network_router_role(IEEE_CHANNEL_MASK);
     zb_set_max_children(MAX_CHILDREN);
-    zb_set_nvram_erase_at_start(ERASE_PERSISTENT_CONFIG);
+    zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));
 
     /* Initialize application context structure. */
@@ -805,6 +807,7 @@ void zboss_signal_handler(zb_uint8_t param)
             if (status == RET_OK)
             {
                 NRF_LOG_INFO("Joined network successfully");
+                bsp_board_led_on(ZIGBEE_NETWORK_STATE_LED);
             }
             else
             {

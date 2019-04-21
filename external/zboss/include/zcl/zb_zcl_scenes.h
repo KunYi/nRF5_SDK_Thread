@@ -212,15 +212,19 @@ typedef ZB_PACKED_PRE struct zb_zcl_scenes_fieldset_common_s
   ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_SCENES_NAME_SUPPORT_ID, (name_support))    \
   ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
 
+/** @cond internals_doc */
 /** @brief Removes All scenes corresponding to a group identifiers in a whole device.
     @param param - buffer to get data from.
     @param group_id - group identifier for which all scenes must be removed.
 */
 zb_void_t zb_zcl_scenes_remove_all_scenes_in_all_endpoints_by_group_id(zb_uint8_t param, zb_uint16_t group_id);
 zb_void_t zb_zcl_scenes_remove_all_scenes_in_all_endpoints(zb_uint8_t param);
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /*! @} */ /* Scenes cluster attributes */
 
+/** @cond internals_doc */
 /*! @name Scenes cluster internals
     Internal structures for Scenes cluster
     @internal
@@ -268,6 +272,8 @@ zb_void_t zb_zcl_scenes_remove_all_scenes_in_all_endpoints(zb_uint8_t param);
 }
 
 /*! @} */ /* Scenes cluster internals */
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /*! @name Scenes cluster commands
     @{
@@ -332,7 +338,7 @@ enum zb_zcl_scenes_cmd_resp_e
   ZB_ZCL_CMD_SCENES_COPY_SCENE_RESPONSE           = 0x42,
 };
 
-
+/** @cond internals_doc */
 /* Scenes cluster commands list : only for information - do not modify */
 #define ZB_ZCL_CLUSTER_ID_SCENES_SERVER_ROLE_GENERATED_CMD_LIST                    \
                                       ZB_ZCL_CMD_SCENES_ADD_SCENE_RESPONSE,        \
@@ -354,7 +360,8 @@ enum zb_zcl_scenes_cmd_resp_e
                                       ZB_ZCL_CMD_SCENES_GET_SCENE_MEMBERSHIP
 
 #define ZB_ZCL_CLUSTER_ID_SCENES_SERVER_ROLE_RECEIVED_CMD_LIST ZB_ZCL_CLUSTER_ID_SCENES_CLIENT_ROLE_GENERATED_CMD_LIST
-
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /**
  *  Inform User App about Scene cluster Add Scene command.

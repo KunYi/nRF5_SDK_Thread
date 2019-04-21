@@ -146,6 +146,12 @@ enum zb_ha_standard_devs_e
 #ifdef ZB_ENABLE_SE_CLUSTERS
 #define ZB_ZCL_SUPPORT_CLUSTER_PRICE 1
 #define ZB_ZCL_SUPPORT_CLUSTER_TUNNELING 1
+#define ZB_ZCL_SUPPORT_CLUSTER_EVENTS 1
+#define ZB_ZCL_SUPPORT_CLUSTER_CALENDAR 1
+#define ZB_ZCL_SUPPORT_CLUSTER_PREPAYMENT 1
+#define ZB_ZCL_SUPPORT_CLUSTER_DEVICE_MANAGEMENT 1
+#define ZB_ZCL_SUPPORT_CLUSTER_MDU_PAIRING 1
+#define ZB_ZCL_SUPPORT_CLUSTER_ENERGY_MANAGEMENT 1
 #define ZB_ZCL_SUPPORT_CLUSTER_MESSAGING 1
 #define ZB_ZCL_SUPPORT_CLUSTER_TIME 1
 #define ZB_ZCL_SUPPORT_CLUSTER_DRLC 1
@@ -416,9 +422,6 @@ enum zb_ha_standard_devs_e
 #define ZB_ZCL_SUPPORT_CLUSTER_IAS_ZONE                  1
 #define ZB_ZCL_SUPPORT_CLUSTER_TIME                      1
 /* #define ZB_ZCL_SUPPORT_CLUSTER_DIAGNOSTICS               1 */
-#if (!defined ZB_HA_SUPPORT_EZ_MODE && !defined ZB_BDB_MODE)
-#define ZB_HA_SUPPORT_EZ_MODE                               1
-#endif
 #define ZB_ZCL_SUPPORT_CLUSTER_OTA_UPGRADE               1
 #define ZB_ZCL_SUPPORT_CLUSTER_GROUPS_CLIENT             1
 #define ZB_ZCL_SUPPORT_CLUSTER_POWER_CONFIG              1
@@ -429,11 +432,6 @@ enum zb_ha_standard_devs_e
 #define ZB_ZCL_SUPPORT_CLUSTER_GROUPS                    1
 #define ZB_ZCL_SUPPORT_CLUSTER_METERING                  1
 
-/*
- * Gateway uses EZ mode only for Gemtek smartplug, which is
- * currently excluded from build.
- */
-/* #define ZB_HA_SUPPORT_EZ_MODE                         1 */
 #endif /* ZB_HA_DEFINE_DEVICE_GATEWAY */
 
 /* Custome device should not be declared as a part of HA, keep it
@@ -454,10 +452,6 @@ enum zb_ha_standard_devs_e
 /* #define ZB_ZCL_SUPPORT_CLUSTER_SCENES               1 */
 #define ZB_ZCL_SUPPORT_CLUSTER_DIAGNOSTICS          1
 #define ZB_ZCL_SUPPORT_CLUSTER_OTA_UPGRADE          1
-/* Features: */
-#if (!defined ZB_HA_SUPPORT_EZ_MODE && !defined ZB_BDB_MODE)
-#define ZB_HA_SUPPORT_EZ_MODE 1
-#endif
 #endif /* ZB_HA_DEFINE_DEVICE_SMART_PLUG */
 
 #ifdef ZB_HA_DEFINE_DEVICE_CUSTOM_DIMMABLE_LIGHT

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -405,7 +405,7 @@ void cmd_zb_readattr(nrf_cli_t const * p_cli, size_t argc, char **argv)
         return;
     }
 
-    sscanf(argv[2], "%hhd", &(p_row->remote_ep));
+    UNUSED_RETURN_VALUE(sscan_uint8(argv[2], &(p_row->remote_ep)));
     sscanf(argv[3], "%hx", &(p_row->cluster_id));
     sscanf(argv[4], "%hx", &(p_row->profile_id));
     sscanf(argv[5], "%hx", &(p_row->attr_id));
@@ -470,7 +470,8 @@ void cmd_zb_writeattr(nrf_cli_t const * p_cli, size_t argc, char **argv)
         nrf_cli_fprintf(p_cli, NRF_CLI_ERROR, "Error: wrong EUI64 address format\r\n");
         return;
     }
-    sscanf(argv[2], "%hhd", &(p_row->remote_ep));
+
+    UNUSED_RETURN_VALUE(sscan_uint8(argv[2], &(p_row->remote_ep)));
     sscanf(argv[3], "%hx", &(p_row->cluster_id));
     sscanf(argv[4], "%hx", &(p_row->profile_id));
     sscanf(argv[5], "%hx", &(p_row->attr_id));

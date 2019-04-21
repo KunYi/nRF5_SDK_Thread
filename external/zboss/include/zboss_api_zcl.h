@@ -73,7 +73,7 @@ PURPOSE: ZBOSS Zigbee cluster library API header
 #include "zcl/zb_zcl_ias_zone.h"
 #include "zcl/zb_zcl_diagnostics.h"
 
-#include "zcl/zb_zcl_custom_attributes.h"
+#include "zcl/zb_zcl_custom_cluster.h"
 
 #include "zcl/zb_zcl_time.h"
 #include "zcl/zb_zcl_dehumidification_control.h"
@@ -87,26 +87,14 @@ PURPOSE: ZBOSS Zigbee cluster library API header
 #include "zcl/zb_zcl_occupancy_sensing.h"
 #include "zcl/zb_zcl_meter_identification.h"
 
-#if defined ZB_ENABLE_HA
 #include "zcl/zb_zcl_poll_control.h"
 #include "zcl/zb_zcl_ota_upgrade.h"
-
-#include "ha/zb_zcl_basic_ha_adds.h"
-#include "ha/zb_zcl_ias_zone_ha_adds.h"
-#include "ha/zb_zcl_power_config_ha_adds.h"
-#include "ha/zb_zcl_thermostat_ha_adds.h"
-#include "ha/zb_zcl_identify_ha_adds.h"
-#endif
 
 #include "zcl/zb_zcl_price.h"
 #include "zcl/zb_zcl_drlc.h"
 #include "zcl/zb_zcl_metering.h"
 #include "zcl/zb_zcl_messaging.h"
 #include "zcl/zb_zcl_tunneling.h"
-
-#if defined ZB_HA_SUPPORT_EZ_MODE
-#include "ha/zb_ha_ez_mode_comissioning.h"
-#endif
 
 #if defined ZB_BDB_MODE
 //#include "zb_bdb_comissioning.h"
@@ -1473,7 +1461,10 @@ typedef enum zb_bdb_commissioning_mode_mask_e
 
 /**
    @brief Start top level commissioning procedure with specified mode mask.
-
+   When the selected commissioning procedure finishes one of the following ZBOSS signals is generated:
+    - @ref ZB_BDB_SIGNAL_STEERING 
+    - @ref ZB_BDB_SIGNAL_FORMATION
+    
    @param mode_mask - commissioning modes, see @ref zb_bdb_commissioning_mode_mask_e
 
    @b Example:
@@ -1547,7 +1538,7 @@ typedef enum zb_bdb_comm_binding_cb_state_e
 } zb_bdb_comm_binding_cb_state_t;
 
 /**
- *  @brief BDB finding & binding callback template.
+ *  @brief BDB finding and binding callback template.
  *
  *  Function is used both to interact with user application, get decision
  *  if new binding is needed or not, and to report the binding result
@@ -1565,7 +1556,7 @@ typedef zb_bool_t (ZB_CODE * zb_bdb_comm_binding_callback_t)(
   zb_int16_t status, zb_ieee_addr_t addr, zb_uint8_t ep, zb_uint16_t cluster);
 
 /**
- *  @brief Start BDB finding & binding procedure on initiator.
+ *  @brief Start BDB finding and binding procedure on initiator.
  *
  *  Summary: Finding and binding as initiator zb_bdb_finding_binding_initiator()
  *  returns RET_OK if procedure was started successfully, error code otherwise. To report procedure
@@ -1581,8 +1572,11 @@ typedef zb_bool_t (ZB_CODE * zb_bdb_comm_binding_callback_t)(
  */
 zb_ret_t zb_bdb_finding_binding_initiator(zb_uint8_t endpoint, zb_bdb_comm_binding_callback_t user_binding_cb);
 
-/** Cancel previously started Finding & Binding procedure on target */
+/** Cancel previously started Finding and Binding procedure on target */
 void zb_bdb_finding_binding_target_cancel(void);
+
+/** Cancel previously started Finding and Binding procedure on initiator */
+void zb_bdb_finding_binding_initiator_cancel(void);
 
 /** @} */
 
@@ -1637,7 +1631,7 @@ zb_void_t zb_bdb_set_legacy_device_support(zb_uint8_t state);
        0              Enables/disables Touchlink commissioning
        1              Attempt network steering
        2              Attempt to form a network
-       3              Attempt finding & binding
+       3              Attempt finding and binding
    @see zb_bdb_commissioning_mode_mask_t
  */
 zb_void_t zb_set_bdb_commissioning_mode(zb_uint8_t commissioning_mode);
@@ -1796,10 +1790,6 @@ typedef struct zb_zcl_globals_s
 #ifdef ZB_HA_ENABLE_OTA_UPGRADE_CLIENT
   zb_zcl_ota_upgrade_cli_ctx_t ota_cli;
 #endif
-#if defined ZB_HA_SUPPORT_EZ_MODE
-  /** @internal HA EZ-Mode commissioning context */
-  zb_ha_ez_mode_ctx_t ha_ez_mode_ctx;
-#endif /*ZB_HA_SUPPORT_EZ_MODE*/
 #if defined ZB_BDB_MODE
   /** @internal BDB commissioning context */
   zb_bdb_comm_ctx_t bdb_comm_ctx;

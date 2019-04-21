@@ -423,9 +423,116 @@ enum zb_zcl_color_control_color_capabilities_e
   ZB_ZCL_COLOR_CONTROL_CAPABILITIES_COLOR_TEMP      = 1 << 4,
 };
 
+/*!
+  @brief Declare attribute list for Color Control cluster (extended attribute set)
+  @param attr_list - attribure list name
+  @param current_hue - pointer to variable to store current_hue attribute value
+  @param current_saturation - pointer to variable to store current_saturation attribute value
+  @param remaining_time - pointer to variable to store remaining_time attribute value
+  @param current_X - pointer to variable to store current_X attribute value
+  @param current_Y - pointer to variable to store current_Y attribute value
+  @param color_temperature - pointer to variable to store color_temperature attribute value
+  @param color_mode - pointer to variable to store color_mode attribute value
+  @param options - pointer to variable to store options attribute value
+  @param number_primaries - pointer to variable to store number_primaries attribute value
+  @param primary_1_X - pointer to variable to store primary_1_X attribute value
+  @param primary_1_Y - pointer to variable to store primary_1_Y attribute value
+  @param primary_1_intensity - pointer to variable to store primary_1_intensity attribute value
+  @param primary_2_X - pointer to variable to store primary_2_X attribute value
+  @param primary_2_Y - pointer to variable to store primary_2_Y attribute value
+  @param primary_2_intensity - pointer to variable to store primary_2_intensity attribute value
+  @param primary_3_X - pointer to variable to store primary_3_X attribute value
+  @param primary_3_Y - pointer to variable to store primary_3_Y attribute value
+  @param primary_3_intensity - pointer to variable to store primary_3_intensity attribute value
+  @param primary_4_X - pointer to variable to store primary_4_X attribute value
+  @param primary_4_Y - pointer to variable to store primary_4_Y attribute value
+  @param primary_4_intensity - pointer to variable to store primary_4_intensity attribute value
+  @param primary_5_X - pointer to variable to store primary_5_X attribute value
+  @param primary_5_Y - pointer to variable to store primary_5_Y attribute value
+  @param primary_5_intensity - pointer to variable to store primary_5_intensity attribute value
+  @param primary_6_X - pointer to variable to store primary_6_X attribute value
+  @param primary_6_Y - pointer to variable to store primary_6_Y attribute value
+  @param primary_6_intensity - pointer to variable to store primary_6_intensity attribute value
+  @param enhanced_current_hue - pointer to variable to store Enhanced Current Hue attribute value
+  @param enhanced_color_mode - pointer to variable to store Enhanced Color Mode attribute value
+  @param color_loop_active - pointer to variable to store Color Loop Active attribute value
+  @param color_loop_direction - pointer to variable to store Color Loop Direction attribute value
+  @param color_loop_time - pointer to variable to store Color Loop Time attribute value
+  @param color_loop_start - pointer to variable to store Color Loop Start Enhanced Hue attribute value
+  @param color_loop_stored - pointer to variable to store Color Loop Stored Enhanced Hue attribute value
+  @param color_capabilities - pointer to variable to store Color Capabilities attribute value
+  @param color_temp_physical_min - pointer to variable to store Color Temp Physical Min attribute value
+  @param color_temp_physical_max - pointer to variable to store Color Temp Physical Max attribute value
+  @param couple_color_temp_to_level_min - pointer to variable to store Couple Color Temp To Level Min Mireds attribute value
+  @param start_up_color_temp - pointer to variable to store Start Up Color Temperature Mireds attribute value
+*/
+#define ZB_ZCL_DECLARE_COLOR_CONTROL_ATTRIB_LIST_EXT(attr_list, current_hue,                       \
+    current_saturation, remaining_time, current_X, current_Y, color_temperature,                   \
+    color_mode, options, number_primaries, primary_1_X, primary_1_Y, primary_1_intensity,          \
+    primary_2_X, primary_2_Y, primary_2_intensity, primary_3_X, primary_3_Y,                       \
+    primary_3_intensity, primary_4_X, primary_4_Y, primary_4_intensity, primary_5_X,               \
+    primary_5_Y, primary_5_intensity, primary_6_X, primary_6_Y, primary_6_intensity,               \
+    enhanced_current_hue, enhanced_color_mode, color_loop_active, color_loop_direction,            \
+    color_loop_time, color_loop_start, color_loop_stored, color_capabilities,                      \
+    color_temp_physical_min, color_temp_physical_max,                                              \
+    couple_color_temp_to_level_min, start_up_color_temp)                                           \
+  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                                      \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_HUE_ID, (current_hue))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_SATURATION_ID, (current_saturation))      \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_REMAINING_TIME_ID, (remaining_time))              \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID, (current_X))                        \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID, (current_Y))                        \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID, (color_temperature))        \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID, (color_mode))                      \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_OPTIONS_ID, (options))                            \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_NUMBER_OF_PRIMARIES_ID, (number_primaries))       \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_1_X_ID, (primary_1_X))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_1_Y_ID, (primary_1_Y))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_1_INTENSITY_ID, (primary_1_intensity))    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_2_X_ID, (primary_2_X))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_2_Y_ID, (primary_2_Y))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_2_INTENSITY_ID, (primary_2_intensity))    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_3_X_ID, (primary_3_X))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_3_Y_ID, (primary_3_Y))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_3_INTENSITY_ID, (primary_3_intensity))    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_4_X_ID, (primary_4_X))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_4_Y_ID, (primary_4_Y))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_4_INTENSITY_ID, (primary_4_intensity))    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_5_X_ID, (primary_5_X))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_5_Y_ID, (primary_5_Y))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_5_INTENSITY_ID, (primary_5_intensity))    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_6_X_ID, (primary_6_X))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_6_Y_ID, (primary_6_Y))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_6_INTENSITY_ID, (primary_6_intensity))    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_ENHANCED_CURRENT_HUE_ID, (enhanced_current_hue))  \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_ENHANCED_COLOR_MODE_ID, (enhanced_color_mode))    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_ACTIVE_ID, (color_loop_active))        \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_DIRECTION_ID, (color_loop_direction))  \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_TIME_ID, (color_loop_time))            \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_START_ENHANCED_HUE_ID, (color_loop_start))          \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_STORED_ENHANCED_HUE_ID, (color_loop_stored))        \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_CAPABILITIES_ID, (color_capabilities))                   \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMP_PHYSICAL_MIN_MIREDS_ID, (color_temp_physical_min))  \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMP_PHYSICAL_MAX_MIREDS_ID, (color_temp_physical_max))  \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS_ID, (couple_color_temp_to_level_min))  \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_START_UP_COLOR_TEMPERATURE_MIREDS_ID, (start_up_color_temp))                 \
+  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
+
+/*!
+  @brief Declare attribute list for Color Control cluster (mandatory attribute set)
+  @param attr_list - attribure list name
+  @param current_X - pointer to variable to store current_X attribute value
+  @param current_Y - pointer to variable to store current_Y attribute value
+*/
+#define ZB_ZCL_DECLARE_COLOR_CONTROL_ATTRIB_LIST(attr_list, current_X, current_Y)               \
+  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                                   \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID, (current_X))                     \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID, (current_Y))                     \
+  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
 
 /*! @} */ /* Color Control cluster attributes */
 
+/** @cond internals_doc */
 /*! @name Color Control cluster internals
     Internal structures for Color Control cluster
     @internal
@@ -891,119 +998,14 @@ typedef struct zb_zcl_color_control_step_loop_s
     loop_data->limit = (limit_);                                                            \
 }
 
-/*!
-  Declare attribute list for Color Control cluster.
-  @param attr_list - attribure list name
-  @param current_hue - pointer to variable to store current_hue attribute value
-  @param current_saturation - pointer to variable to store current_saturation attribute value
-  @param remaining_time - pointer to variable to store remaining_time attribute value
-  @param current_X - pointer to variable to store current_X attribute value
-  @param current_Y - pointer to variable to store current_Y attribute value
-  @param color_temperature - pointer to variable to store color_temperature attribute value
-  @param color_mode - pointer to variable to store color_mode attribute value
-  @param options - pointer to variable to store options attribute value
-  @param number_primaries - pointer to variable to store number_primaries attribute value
-  @param primary_1_X - pointer to variable to store primary_1_X attribute value
-  @param primary_1_Y - pointer to variable to store primary_1_Y attribute value
-  @param primary_1_intensity - pointer to variable to store primary_1_intensity attribute value
-  @param primary_2_X - pointer to variable to store primary_2_X attribute value
-  @param primary_2_Y - pointer to variable to store primary_2_Y attribute value
-  @param primary_2_intensity - pointer to variable to store primary_2_intensity attribute value
-  @param primary_3_X - pointer to variable to store primary_3_X attribute value
-  @param primary_3_Y - pointer to variable to store primary_3_Y attribute value
-  @param primary_3_intensity - pointer to variable to store primary_3_intensity attribute value
-  @param primary_4_X - pointer to variable to store primary_4_X attribute value
-  @param primary_4_Y - pointer to variable to store primary_4_Y attribute value
-  @param primary_4_intensity - pointer to variable to store primary_4_intensity attribute value
-  @param primary_5_X - pointer to variable to store primary_5_X attribute value
-  @param primary_5_Y - pointer to variable to store primary_5_Y attribute value
-  @param primary_5_intensity - pointer to variable to store primary_5_intensity attribute value
-  @param primary_6_X - pointer to variable to store primary_6_X attribute value
-  @param primary_6_Y - pointer to variable to store primary_6_Y attribute value
-  @param primary_6_intensity - pointer to variable to store primary_6_intensity attribute value
-  @param enhanced_current_hue - pointer to variable to store Enhanced Current Hue attribute value
-  @param enhanced_color_mode - pointer to variable to store Enhanced Color Mode attribute value
-  @param color_loop_active - pointer to variable to store Color Loop Active attribute value
-  @param color_loop_direction - pointer to variable to store Color Loop Direction attribute value
-  @param color_loop_time - pointer to variable to store Color Loop Time attribute value
-  @param color_loop_start - pointer to variable to store Color Loop Start Enhanced Hue attribute value
-  @param color_loop_stored - pointer to variable to store Color Loop Stored Enhanced Hue attribute value
-  @param color_capabilities - pointer to variable to store Color Capabilities attribute value
-  @param color_temp_physical_min - pointer to variable to store Color Temp Physical Min attribute value
-  @param color_temp_physical_max - pointer to variable to store Color Temp Physical Max attribute value
-  @param couple_color_temp_to_level_min - pointer to variable to store Couple Color Temp To Level Min Mireds attribute value
-  @param start_up_color_temp - pointer to variable to store Start Up Color Temperature Mireds attribute value
-*/
-#define ZB_ZCL_DECLARE_COLOR_CONTROL_ATTRIB_LIST(attr_list, current_hue,                           \
-    current_saturation, remaining_time, current_X, current_Y, color_temperature,                   \
-    color_mode, options, number_primaries, primary_1_X, primary_1_Y, primary_1_intensity,          \
-    primary_2_X, primary_2_Y, primary_2_intensity, primary_3_X, primary_3_Y,                       \
-    primary_3_intensity, primary_4_X, primary_4_Y, primary_4_intensity, primary_5_X,               \
-    primary_5_Y, primary_5_intensity, primary_6_X, primary_6_Y, primary_6_intensity,               \
-    enhanced_current_hue, enhanced_color_mode, color_loop_active, color_loop_direction,            \
-    color_loop_time, color_loop_start, color_loop_stored, color_capabilities,                      \
-    color_temp_physical_min, color_temp_physical_max,                                              \
-    couple_color_temp_to_level_min, start_up_color_temp)                                           \
-  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                                      \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_HUE_ID, (current_hue))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_SATURATION_ID, (current_saturation))      \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_REMAINING_TIME_ID, (remaining_time))              \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID, (current_X))                        \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID, (current_Y))                        \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID, (color_temperature))        \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID, (color_mode))                      \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_OPTIONS_ID, (options))                            \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_NUMBER_OF_PRIMARIES_ID, (number_primaries))       \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_1_X_ID, (primary_1_X))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_1_Y_ID, (primary_1_Y))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_1_INTENSITY_ID, (primary_1_intensity))    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_2_X_ID, (primary_2_X))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_2_Y_ID, (primary_2_Y))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_2_INTENSITY_ID, (primary_2_intensity))    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_3_X_ID, (primary_3_X))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_3_Y_ID, (primary_3_Y))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_3_INTENSITY_ID, (primary_3_intensity))    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_4_X_ID, (primary_4_X))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_4_Y_ID, (primary_4_Y))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_4_INTENSITY_ID, (primary_4_intensity))    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_5_X_ID, (primary_5_X))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_5_Y_ID, (primary_5_Y))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_5_INTENSITY_ID, (primary_5_intensity))    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_6_X_ID, (primary_6_X))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_6_Y_ID, (primary_6_Y))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_PRIMARY_6_INTENSITY_ID, (primary_6_intensity))    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_ENHANCED_CURRENT_HUE_ID, (enhanced_current_hue))  \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_ENHANCED_COLOR_MODE_ID, (enhanced_color_mode))    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_ACTIVE_ID, (color_loop_active))        \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_DIRECTION_ID, (color_loop_direction))  \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_TIME_ID, (color_loop_time))            \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_START_ENHANCED_HUE_ID, (color_loop_start))          \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_LOOP_STORED_ENHANCED_HUE_ID, (color_loop_stored))        \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_CAPABILITIES_ID, (color_capabilities))                   \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMP_PHYSICAL_MIN_MIREDS_ID, (color_temp_physical_min))  \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMP_PHYSICAL_MAX_MIREDS_ID, (color_temp_physical_max))  \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS_ID, (couple_color_temp_to_level_min))  \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_START_UP_COLOR_TEMPERATURE_MIREDS_ID, (start_up_color_temp))                 \
-  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
-
-/*!
-  Declare mandatory attribute list for Color Control cluster
-  @param attr_list - attribure list name
-  @param current_X - pointer to variable to store current_X attribute value
-  @param current_Y - pointer to variable to store current_Y attribute value
-*/
-#define ZB_ZCL_DECLARE_COLOR_CONTROL_MANDATORY_ATTRIB_LIST(attr_list, current_X, current_Y)     \
-  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                                   \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID, (current_X))                     \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID, (current_Y))                     \
-  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
-
 /*! Number of attributes mandatory for reporting in Color Control cluster
  * Attribute: CurrentX, CurrentY, CurrentHue, CurrentSaturation, ColorTemperature
  *  */
 #define ZB_ZCL_COLOR_CONTROL_REPORT_ATTR_COUNT 5
 
 /*! @} */ /* Color Control cluster internals */
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 /*! @name Color Control cluster commands
     @{
@@ -1056,6 +1058,7 @@ enum zb_zcl_color_control_cmd_e
   ZB_ZCL_CMD_COLOR_CONTROL_STEP_COLOR_TEMPERATURE           = 0x4c,
 };
 
+/** @cond internals_doc */
 /* Color control cluster commands list : only for information - do not modify */
 #define ZB_ZCL_CLUSTER_ID_COLOR_CONTROL_SERVER_ROLE_GENERATED_CMD_LIST
 
@@ -1083,6 +1086,8 @@ enum zb_zcl_color_control_cmd_e
                                           ZB_ZCL_CMD_COLOR_CONTROL_STEP_COLOR_TEMPERATURE
 
 #define ZB_ZCL_CLUSTER_ID_COLOR_CONTROL_SERVER_ROLE_RECEIVED_CMD_LIST ZB_ZCL_CLUSTER_ID_COLOR_CONTROL_CLIENT_ROLE_GENERATED_CMD_LIST
+/*! @}
+ *  @endcond */ /* internals_doc */
 
 
 /* command parameters enumerates */

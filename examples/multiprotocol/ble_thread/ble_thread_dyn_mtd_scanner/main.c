@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -78,12 +78,12 @@
 #define CENTRAL_SCANNING_LED      BSP_LED_2_MASK                     /**< Scanning LED will be on when the device is scanning. */
 #define CENTRAL_CONNECTED_LED     BSP_LED_1_MASK                     /**< Connected LED will be on when the device is connected. */
 
-#define SCAN_INTERVAL             MSEC_TO_UNITS(100, UNIT_0_625_MS)  /**< Determines scan interval in units of 0.625 millisecond. */
-#define SCAN_WINDOW               MSEC_TO_UNITS(50, UNIT_0_625_MS)   /**< Determines scan window in units of 0.625 millisecond. */
-#define SCAN_DURATION             MSEC_TO_UNITS(1000, UNIT_10_MS)    /**< Determines scan timeout in units of 10 milliseconds. */
+#define SCAN_INTERVAL             MSEC_TO_UNITS(120, UNIT_0_625_MS)  /**< Determines scan interval in units of 0.625 millisecond. */
+#define SCAN_WINDOW               MSEC_TO_UNITS(30, UNIT_0_625_MS)   /**< Determines scan window in units of 0.625 millisecond. */
+#define SCAN_DURATION             MSEC_TO_UNITS(5000, UNIT_10_MS)    /**< Determines scan timeout in units of 10 milliseconds. */
 
-#define MIN_CONNECTION_INTERVAL   MSEC_TO_UNITS(7.5, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL   MSEC_TO_UNITS(30, UNIT_1_25_MS)    /**< Determines maximum connection interval in milliseconds. */
+#define MIN_CONNECTION_INTERVAL   MSEC_TO_UNITS(100, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL   MSEC_TO_UNITS(200, UNIT_1_25_MS)    /**< Determines maximum connection interval in milliseconds. */
 #define SLAVE_LATENCY             0                                  /**< Determines slave latency in terms of connection events. */
 #define SUPERVISION_TIMEOUT       MSEC_TO_UNITS(4000, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 milliseconds. */
 
@@ -194,7 +194,8 @@ static void ble_device_mark_as_target(const ble_gap_addr_t * p_bdaddr)
  */
 static void address_to_string_convert(char * p_addr_string, const ble_gap_addr_t * p_gap_addr, uint8_t addr_string_len)
 {
-    ASSERT(addr_string_len >= ((2 * sizeof(p_gap_addr->addr)) + 1))
+    ASSERT(addr_string_len >= (sizeof(p_gap_addr->addr) + 1));
+
     UNUSED_VARIABLE(addr_string_len);
 
     int8_t index = 0;
@@ -251,7 +252,7 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
 {
     ret_code_t err_code;
-    char       peer_addr[BLE_GAP_ADDR_LEN];
+    char       peer_addr[BLE_GAP_ADDR_LEN + 1];
     ble_uuid_t target_uuid;
 
     memset(&target_uuid, 0, sizeof(target_uuid));
@@ -281,7 +282,11 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
     }
 
     err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
-    APP_ERROR_CHECK(err_code);
+
+    if (err_code != NRF_SUCCESS && err_code != NRF_ERROR_INVALID_STATE)
+    {
+        APP_ERROR_CHECK(err_code);
+    }
 }
 
 /**@brief Function for handling BLE events.
@@ -298,20 +303,25 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_CONNECTED:
         {
-            char peer_addr[BLE_GAP_ADDR_LEN];
+            char peer_addr[BLE_GAP_ADDR_LEN + 1];
+
             address_to_string_convert(peer_addr, &m_target_device.addr, sizeof(peer_addr));
+
             NRF_LOG_INFO("Connected to %s.", (uint32_t)peer_addr);
-            NRF_LOG_FLUSH();
+
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
+
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
         } break;
 
         case BLE_GAP_EVT_DISCONNECTED:
         {
             NRF_LOG_INFO("Disconnected.");
+
             err_code = bsp_indication_set(BSP_INDICATE_IDLE);
             APP_ERROR_CHECK(err_code);
+
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
             if (m_shall_rescan)
             {
@@ -515,7 +525,7 @@ static void thread_instance_init(void)
 {
     thread_configuration_t thread_configuration =
     {
-        .role                  = RX_OFF_WHEN_IDLE,
+        .radio_mode            = THREAD_RADIO_MODE_RX_OFF_WHEN_IDLE,
         .autocommissioning     = true,
         .poll_period           = 2500,
         .default_child_timeout = 10,

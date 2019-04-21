@@ -852,7 +852,7 @@ enum zb_zcl_on_off_cli_cmd_e
 }
 
 
-/** @internal @brief Declare attribute list for Electrical Measurement cluster
+/** @brief Declare attribute list for Electrical Measurement cluster
     @param attr_list - attribure list name
     @param measurement_type - pointer to variable to store Measurement Type attribute value
     @param dcpower - pointer to variable to store DCPower attribute value

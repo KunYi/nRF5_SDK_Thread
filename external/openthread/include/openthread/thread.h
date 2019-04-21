@@ -59,7 +59,8 @@ extern "C" {
  * Represents a Thread device role.
  *
  */
-typedef enum {
+typedef enum
+{
     OT_DEVICE_ROLE_DISABLED = 0, ///< The Thread stack is disabled.
     OT_DEVICE_ROLE_DETACHED = 1, ///< Not currently participating in a Thread network/partition.
     OT_DEVICE_ROLE_CHILD    = 2, ///< The Thread Child role.
@@ -75,7 +76,7 @@ typedef struct otLinkModeConfig
 {
     bool mRxOnWhenIdle : 1;       ///< 1, if the sender has its receiver on when not transmitting. 0, otherwise.
     bool mSecureDataRequests : 1; ///< 1, if the sender uses IEEE 802.15.4 to secure all data requests. 0, otherwise.
-    bool mDeviceType : 1;         ///< 1, if the sender is an FFD. 0, otherwise.
+    bool mDeviceType : 1;         ///< 1, if the sender is an FTD. 0, otherwise.
     bool mNetworkData : 1;        ///< 1, if the sender requires the full Network Data. 0, otherwise.
 } otLinkModeConfig;
 
@@ -100,7 +101,7 @@ typedef struct
     uint16_t     mMessageErrorRate;      ///< (IPv6) msg error rate (0xffff->100%). Requires error tracking feature.
     bool         mRxOnWhenIdle : 1;      ///< rx-on-when-idle
     bool         mSecureDataRequest : 1; ///< Secure Data Requests
-    bool         mFullFunction : 1;      ///< Full Function Device
+    bool         mFullThreadDevice : 1;  ///< Full Thread Device
     bool         mFullNetworkData : 1;   ///< Full Network Data
     bool         mIsChild : 1;           ///< Is the neighbor a child
 } otNeighborInfo;
@@ -165,7 +166,7 @@ typedef struct otMleCounters
     uint16_t mRouterRole;                    ///< Number of times device entered OT_DEVICE_ROLE_ROUTER role.
     uint16_t mLeaderRole;                    ///< Number of times device entered OT_DEVICE_ROLE_LEADER role.
     uint16_t mAttachAttempts;                ///< Number of attach attempts while device was detached.
-    uint16_t mParitionIdChanges;             ///< Number of changes to partition ID.
+    uint16_t mPartitionIdChanges;            ///< Number of changes to partition ID.
     uint16_t mBetterPartitionAttachAttempts; ///< Number of attempts to attach to a better partition.
 
     /**
@@ -181,6 +182,22 @@ typedef struct otMleCounters
      */
     uint16_t mParentChanges;
 } otMleCounters;
+
+/**
+ * This structure represents the MLE Parent Response data.
+ *
+ */
+typedef struct otThreadParentResponseInfo
+{
+    otExtAddress mExtAddr;      ///< IEEE 802.15.4 Extended Address of the Parent
+    uint16_t     mRloc16;       ///< Short address of the Parent
+    int8_t       mRssi;         ///< Rssi of the Parent
+    int8_t       mPriority;     ///< Parent priority
+    uint8_t      mLinkQuality3; ///< Parent Link Quality 3
+    uint8_t      mLinkQuality2; ///< Parent Link Quality 2
+    uint8_t      mLinkQuality1; ///< Parent Link Quality 1
+    bool         mIsAttached;   ///< Is the node receiving parent response attached
+} otThreadParentResponseInfo;
 
 /**
  * This function starts Thread protocol operation.
@@ -265,7 +282,7 @@ OTAPI bool OTCALL otThreadIsDiscoverInProgress(otInstance *aInstance);
  *
  * @param[in]  aInstance A pointer to an OpenThread instance.
  *
- * @returns The Thread Child Timeout value.
+ * @returns The Thread Child Timeout value in seconds.
  *
  * @sa otThreadSetChildTimeout
  */
@@ -275,7 +292,7 @@ OTAPI uint32_t OTCALL otThreadGetChildTimeout(otInstance *aInstance);
  * Set the Thread Child Timeout used when operating in the Child role.
  *
  * @param[in]  aInstance A pointer to an OpenThread instance.
- * @param[in]  aTimeout  The timeout value.
+ * @param[in]  aTimeout  The timeout value in seconds.
  *
  * @sa otThreadSetChildTimeout
  *
@@ -468,6 +485,9 @@ OTAPI uint32_t OTCALL otThreadGetKeySequenceCounter(otInstance *aInstance);
 /**
  * Set the thrKeySequenceCounter.
  *
+ * @note This API is reserved for testing and demo purposes only. Changing settings with
+ * this API will render a production application non-compliant with the Thread Specification.
+ *
  * @param[in]  aInstance            A pointer to an OpenThread instance.
  * @param[in]  aKeySequenceCounter  The thrKeySequenceCounter value.
  *
@@ -491,6 +511,9 @@ OTAPI uint32_t OTCALL otThreadGetKeySwitchGuardTime(otInstance *aInstance);
 /**
  * Set the thrKeySwitchGuardTime
  *
+ * @note This API is reserved for testing and demo purposes only. Changing settings with
+ * this API will render a production application non-compliant with the Thread Specification.
+ *
  * @param[in]  aInstance            A pointer to an OpenThread instance.
  * @param[in]  aKeySwitchGuardTime  The thrKeySwitchGuardTime value (in hours).
  *
@@ -512,6 +535,9 @@ OTAPI otError OTCALL otThreadBecomeDetached(otInstance *aInstance);
 
 /**
  * Attempt to reattach as a child.
+ *
+ * @note This API is reserved for testing and demo purposes only. Changing settings with
+ * this API will render a production application non-compliant with the Thread Specification.
  *
  * @param[in]  aInstance A pointer to an OpenThread instance.
  *
@@ -707,7 +733,7 @@ OTAPI const otIpCounters *OTCALL otThreadGetIp6Counters(otInstance *aInstance);
  * @returns A pointer to the Thread MLE counters.
  *
  */
-const otMleCounters *otThreadGetMleCounters(otInstance *aInstance);
+OTAPI const otMleCounters *OTCALL otThreadGetMleCounters(otInstance *aInstance);
 
 /**
  * Reset the Thread MLE counters.
@@ -716,6 +742,30 @@ const otMleCounters *otThreadGetMleCounters(otInstance *aInstance);
  *
  */
 void otThreadResetMleCounters(otInstance *aInstance);
+
+/**
+ * This function pointer is called every time an MLE Parent Response message is received.
+ *
+ * @param[in]  aStats    pointer to a location on stack holding the stats data.
+ * @param[in]  aContext  A pointer to callback client-specific context.
+ *
+ */
+typedef void(OTCALL *otThreadParentResponseCallback)(otThreadParentResponseInfo *aInfo, void *aContext);
+
+/**
+ * This function registers a callback to receive MLE Parent Response data.
+ *
+ * @param[in]  aInstance  A pointer to an OpenThread instance.
+ * @param[in]  aCallback  A pointer to a function that is called upon receiving an MLE Parent Response message.
+ * @param[in]  aContext   A pointer to callback client-specific context.
+ *
+ * @retval OT_ERROR_NONE              On successful registration
+ * @retval OT_ERROR_DISABLED_FEATURE  If the feature is not supported
+ *
+ */
+OTAPI otError OTCALL otThreadRegisterParentResponseCallback(otInstance *                   aInstance,
+                                                            otThreadParentResponseCallback aCallback,
+                                                            void *                         aContext);
 
 /**
  * @}

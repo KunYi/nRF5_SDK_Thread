@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 /**@file
  *
- * @defgroup sdk_nrf_dfu_validation Validation
+ * @defgroup nrf_dfu_validation Validation
  * @{
  * @ingroup  nrf_dfu
  */
@@ -98,15 +98,15 @@ void nrf_dfu_validation_init_cmd_status_get(uint32_t * p_offset,
 bool nrf_dfu_validation_init_cmd_present(void);
 
 /**
- * @brief Function for validating init command.
+ * @brief Function for validating init command and retrieving the address and length of the firmware.
  *
  * If init command is successfully validated Bank 1 details are written to out parameters.
  *
  * Until @ref nrf_dfu_validation_init_cmd_create is called, this function can be called
  * again after the first time without side effects to retrieve address and length.
  *
- * @param[out] p_dst_data_addr Bank 1 start address if validation is successful.
- * @param[out] p_data_len  Bank 1 length if validation is successful.
+ * @param[out] p_dst_data_addr  Start address of received data, if validation is successful.
+ * @param[out] p_data_len       Expected length of received data, if validation is successful.
  *
  * @return       Operation result. See @ref nrf_dfu_result_t
  */
@@ -114,65 +114,85 @@ nrf_dfu_result_t nrf_dfu_validation_init_cmd_execute(uint32_t * p_dst_data_addr,
                                                      uint32_t * p_data_len);
 
 /**
- * @brief Function for postvalidating the update. Function is called once all data is received.
+ * @brief Function for validating the init command.
  *
- * @param[in] dst_data_addr Bank 1 start address.
- * @param[in] data_len      Bank 1 length.
+ * @return       Operation result. See @ref nrf_dfu_result_t.
+ */
+nrf_dfu_result_t nrf_dfu_validation_prevalidate(void);
+
+/**
+ * @brief Function for validating the firmware for booting.
+ *
+ * @param[in] p_validation  Validation parameters.
+ * @param[in] data_addr     Start address of the firmware.
+ * @param[in] data_len      Length of the firmware.
+ *
+ * @return       Whether the firmware is valid for booting.
+ */
+bool nrf_dfu_validation_boot_validate(boot_validation_t const * p_validation, uint32_t data_addr, uint32_t data_len);
+
+/**
+ * @brief Function for postvalidating the update after all data is received.
+ *
+ * @param[in] data_addr  Start address of the received data.
+ * @param[in] data_len   Length of the received data.
+ *
+ * @return       Operation result. See @ref nrf_dfu_result_t.
+ */
+nrf_dfu_result_t nrf_dfu_validation_post_data_execute(uint32_t data_addr, uint32_t data_len);
+
+/**
+ * @brief Function for preparing the update for activation.
+ *
+ * This function is called after a reset, after all data is received. This function also runs
+ * @ref nrf_dfu_validation_post_data_execute internally. If this succeeds, the update is
+ * activated by the activation machinery in the bootloader the next time it runs.
+ *
+ * @note The caller must have permissions to edit the relevant entries in the settings.
+ *
+ * @param[in] data_addr  Start address of the received data.
+ * @param[in] data_len   Length of the received data.
  *
  * @return       Operation result. See @ref nrf_dfu_result_t
  */
-nrf_dfu_result_t nrf_dfu_validation_post_data_execute(uint32_t dst_data_addr, uint32_t data_len);
-
+nrf_dfu_result_t nrf_dfu_validation_activation_prepare(uint32_t data_addr, uint32_t data_len);
 
 /**
- * @brief Function to execute on validated external app.
+ * @brief Function to execute on a validated external app.
  *
- * @details Function is called one all data is received with the parameter
- *          is_boot set to false. Function is called during bootup with the parameter
+ * @details This function is called once all data is received with the parameter
+ *          @p is_boot set to false. The function is called during bootup with the parameter
  *          set to true.
  *
  *
  *
- * @note This function requires @ref NRF_DFU_SUPPORTS_EXTERNAL_APP is set to 1.
+ * @note This function requires that @ref NRF_DFU_SUPPORTS_EXTERNAL_APP is set to 1.
  *       It is up to the user to implement this function.
  *
- * @warning is_trusted must be used to ensure that no loss of security of process can happen.
- *          This parameter should *only* be set if the function is called after a root-of-trust
+ * @warning Parameter @p is_trusted must be used to ensure that no loss of security of process can happen.
+ *          This parameter should only be set if the function is called after a root-of-trust
  *          reset on the device.
  *
- *          is_trusted can be used for the following:
- *          - Ensuring that an external application is only run once (after root-of-trust)
- *          - Ensure that a bank flag or any other FLASH access can only happen after root-of-trust
- *          - Ensure that the device reaches the correct state after a a power-failure on the device
+ *          Parameter @p is_trusted can be used for the following:
+ *          - Ensuring that an external application is run only once (after root-of-trust).
+ *          - Ensuring that a bank flag or any other flash access can only happen after root-of-trust.
+ *          - Ensuring that the device reaches the correct state after a power failure on the device.
  *
- * @param[in] p_init        InitCommand for the FW upgrade
- * @param[in] is_trusted    Must be set to true if this is called after root-of-trust boot
+ * @param[in] p_init        Init command for the firmware upgrade.
+ * @param[in] is_trusted    Must be set to true if this is called after root-of-trust boot.
  *                          Must be set to false if this is called from DFU mode or background
  *                          DFU operation.
  *
- * @return      Operation result. see @ref nrf_dfu_result_t
+ * @return      Operation result. see @ref nrf_dfu_result_t.
  */
 nrf_dfu_result_t nrf_dfu_validation_post_external_app_execute(dfu_init_command_t const * p_init, bool is_trusted);
 
 /**
-* @brief Function to see if there is a valid external app in bank 1
+* @brief Function to check if there is a valid external app in Bank 1.
 *
 * @returns True if valid external app, otherwise false.
 */
 bool nrf_dfu_validation_valid_external_app(void);
-
-/**
- * @brief Function to invalidate external app in bank 1
- *
- * @note This will set the bank 1 slot to @ref NRF_DFU_BANK_INVALID in FLASH.
- *
- * @note @ref nrf_dfu_settings_init must be called before using this function
- *
- * @param[in] callback  Pointer to a function that is called after completing the write operation.
- *
- * @return  Operational result. See @nrf_dfu_settings_write.
- */
-ret_code_t nrf_dfu_validation_invalidate_external_app(nrf_dfu_flash_callback_t callback);
 
 #endif //__NRF_DFU_VALIDATION_H
 

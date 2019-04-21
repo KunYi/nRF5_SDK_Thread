@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -743,9 +743,9 @@ static void thread_state_changed_callback(uint32_t flags, void * p_context)
  */
 static void thread_instance_init(void)
 {
-    thread_configuration_t  thread_configuration =
+    thread_configuration_t thread_configuration =
     {
-        .role              = RX_ON_WHEN_IDLE,
+        .radio_mode        = THREAD_RADIO_MODE_RX_ON_WHEN_IDLE,
         .autocommissioning = true,
         .autostart_disable = false,
     };

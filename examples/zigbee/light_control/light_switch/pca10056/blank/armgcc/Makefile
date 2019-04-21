@@ -40,8 +40,10 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage_nvmc.c \
   $(SDK_ROOT)/components/libraries/memobj/nrf_memobj.c \
+  $(SDK_ROOT)/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c \
   $(SDK_ROOT)/components/libraries/queue/nrf_queue.c \
   $(SDK_ROOT)/components/libraries/ringbuf/nrf_ringbuf.c \
+  $(SDK_ROOT)/components/libraries/experimental_section_vars/nrf_section_iter.c \
   $(SDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_clock.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_rng.c \
@@ -50,9 +52,9 @@ SRC_FILES += \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd/nrf_nvic.c \
   $(SDK_ROOT)/modules/nrfx/hal/nrf_nvmc.c \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd/nrf_soc.c \
+  $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power_clock.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/prs/nrfx_prs.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_rng.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c \
@@ -62,6 +64,8 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/bsp/bsp.c \
   $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
+  $(SDK_ROOT)/components/zigbee/common/zigbee_helpers.c \
+  $(SDK_ROOT)/components/zigbee/common/zigbee_logger_eprxzcl.c \
 
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -74,8 +78,10 @@ INC_FOLDERS += \
   ../config \
   $(SDK_ROOT)/external/nRF-IEEE-802.15.4-radio-driver/src \
   $(SDK_ROOT)/components/libraries/delay \
+  $(SDK_ROOT)/external/nRF-IEEE-802.15.4-radio-driver/src/rsch \
   $(SDK_ROOT)/external/zboss/include \
   $(SDK_ROOT)/external/nRF-IEEE-802.15.4-radio-driver/src/mac_features \
+  $(SDK_ROOT)/external/nRF-IEEE-802.15.4-radio-driver/src/mac_features/ack_generator \
   $(SDK_ROOT)/components/toolchain/cmsis/include \
   $(SDK_ROOT)/components/libraries/balloc \
   $(SDK_ROOT)/components/libraries/log \
@@ -86,16 +92,19 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/strerror \
   $(SDK_ROOT)/integration/nrfx \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
+  $(SDK_ROOT)/components/zigbee/common \
   $(SDK_ROOT)/external/zboss/include/zcl \
   $(SDK_ROOT)/components/libraries/ringbuf \
   $(SDK_ROOT)/modules/nrfx \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd \
   $(SDK_ROOT)/components/libraries/log/src \
   $(SDK_ROOT)/external/zboss/include/ha \
+  $(SDK_ROOT)/external/zboss/include/osif \
   $(SDK_ROOT)/external/zboss/zb_error \
   $(SDK_ROOT)/modules/nrfx/hal \
-  $(SDK_ROOT)/external/zboss/include/osif \
+  $(SDK_ROOT)/components/libraries/mutex \
   $(SDK_ROOT)/components/libraries/queue \
+  $(SDK_ROOT)/components/libraries/pwr_mgmt \
   $(SDK_ROOT)/components/libraries/bsp \
   $(SDK_ROOT)/components/libraries/fstorage \
   $(SDK_ROOT)/components/boards \
@@ -135,7 +144,6 @@ CFLAGS += -fno-builtin -fshort-enums -Wno-packed-bitfield-compat
 
 # C++ flags common to all targets
 CXXFLAGS += $(OPT)
-
 # Assembler flags common to all targets
 ASMFLAGS += -ggdb3
 ASMFLAGS += -mcpu=cortex-m4

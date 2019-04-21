@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2019, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 /** @file
  *
- * @defgroup zigbee_examples_thingy_master_zed_color_light_bulb ble_thingy_master.h
+ * @defgroup zigbee_examples_ble_zigbee_color_light_bulb_thingy ble_thingy_master.h
  * @{
  * @ingroup zigbee_examples
  * @brief Dynamic multiprotocol example application to demonstrate control on BLE device (peripheral role) using zigbee device.
@@ -54,6 +54,7 @@
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
+#include "rgb_led.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,26 +75,29 @@ extern "C" {
 #define APP_BLE_CONN_CFG_TAG                1                                   /**< A tag identifying the SoftDevice BLE configuration. */
 #define APP_BLE_OBSERVER_PRIO               3                                   /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 
+#define BLE_UUID_BATTERY_SERVICE            0x180F                              /**< Short UUID BLE battery service. */
+#define BLE_UUID_THINGY_SERVICE             0x0300                              /**< Short UUID Thingy LED & button service. */
 #define BLE_UUID_THINGY_LED_CHAR            0x0301                              /**< Short UUID Thingy LED Characteristic. */
+#define BLE_UUID_THINGY_BUTTON_CHAR         0x0302                              /**< Short UUID Thingy button Characteristic. */
 #define APP_BLE_CONN_HANDLER_DEFAULT        0xFFFF                              /**< Default value of connection handler used when dev is not connected. */
 
-#define APP_BLE_THINGY_SCANNING_TIMEOUT     30000                               /**< Period of time after which stop scanning. */
 #define APP_BLE_THINGY_DEVICE_NAME          "Thingy"                            /**< Device name to connects to. */
+#define APP_BLE_THINGY_MASTER_GATT_Q_SIZE   40                                  /**< Length of the internal GATT request queue. */
+#define APP_BLE_THINGY_SCANNING_TIMEOUT     5                                   /**< Period of time after which stop scanning. */
 
-#ifdef __CC_ARM
-#pragma anon_unions
-#endif
-
-typedef enum thingy_led_mode_e
+/* Thingy device events passed to the main application. */
+typedef enum
 {
-    APP_BLE_THINGY_LED_MODE_CONSTANT = 1,
-    APP_BLE_THINGY_LED_MODE_BREATHING
-} thingy_led_mode_t;
+    THINGY_BUTTON_PRESSED,
+    THINGY_BUTTON_RELEASED,
+    THINGY_CONNECTED,
+    THINGY_DISCONNECTED,
+} thingy_evt_t;
 
 /* Structure to contain characteristic for discovery purpose */
 typedef struct
 {
-    uint8_t                     name[10];
+    uint8_t                     name[20];
     uint16_t                    handle;
 } characteristic_t;
 
@@ -102,55 +106,42 @@ typedef struct
 {
     characteristic_t            battery_level;
     characteristic_t            led;
+    characteristic_t            button;
+    characteristic_t            button_cccd;
     uint16_t                    conn_handle;
 } thingy_device_t;
 
-/* Structure for storing data to be written to Thingy's LED characteristic */
-typedef PACKED_STRUCT led_params_s
-{
-    thingy_led_mode_t mode;                 /**< Mode of Thingy LED behaviour. */
-    __PACKED union
-    {
-        PACKED_STRUCT
-        {
-            uint8_t  r_value;               /**< Red color value. */
-            uint8_t  g_value;               /**< Green color value. */
-            uint8_t  b_value;               /**< Blue color value. */
-        };
-        PACKED_STRUCT
-        {
-            uint8_t  color;                 /**< Value related to color in breathing mode, check Thingy Firmware Architecture for more informations. */
-            uint8_t  intensity;             /**< Intensity of LED in breathing mode (0 - 100)%. */
-            uint16_t delay;                 /**< Amount of time determining how fast LED is breathing (50 ms - 10s). */
-        };
-    };
-} led_params_t;
-
-/**
- * @brief Function for initializing the timer.
- */
-void ble_thingy_master_timer_init(void);
+/**@brief Callback definition for intercepting thingy device events. */
+typedef void (*thingy_evt_handler_t)(thingy_device_t * p_thingy, thingy_evt_t evt);
 
 /**@brief Function to initialise internal module structure.
- * 
+ *
  * @param[IN] p_thingy_dev_table Pointer to thingy device table.
  * @param[IN] thingy_cnt         Number of thingy devices.
- * 
+ * @param[IN] evt_handler        Callback function for thingy devices events.
+ *
  * @returns Error code.
  */
-ret_code_t ble_thingy_master_init(thingy_device_t * p_thingy_dev_table, uint8_t thingy_cnt);
+ret_code_t ble_thingy_master_init(thingy_device_t    * p_thingy_dev_table,
+                                  uint8_t              thingy_cnt,
+                                  thingy_evt_handler_t evt_handler);
 
 /**@brief Function to update LED on thingy device using given parameters.
- * 
+ *
  * @param[IN]  p_thingy     Pointer to thingy device.
  * @param[IN]  led_params   Pointer to structure containing led parameters to write to Thingy LED characteristic
  */
-void ble_thingy_master_update_led(thingy_device_t * p_thingy, const struct led_params_s * led_params);
+void ble_thingy_master_update_led(thingy_device_t    * p_thingy,
+                                  const led_params_t * led_params);
 
-/**
- * @brief Function start scanning.
+/**@brief Scan for Thingy devices.
+ *
+ * This function starts BLE scan to look for Thingy:52 devices. If found
+ * a BLE connection is established.
+ *
+ * @param[in] timeout Duration, in seconds, of the scan.
  */
-void ble_thingy_master_start(void);
+void ble_thingy_master_scan(uint8_t timeout);
 
 
 #ifdef __cplusplus
